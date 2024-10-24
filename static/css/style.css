@@ -1,103 +1,115 @@
 /* General Styles */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0; /* Light background for contrast */
+  font-family: 'Roboto', sans-serif; /* Updated font */
+  background-color: #e9ecef; /* Slightly darker background for better contrast */
   margin: 0;
   padding: 20px;
+  color: #333; /* Standard text color */
 }
 
-/* Content Container */
 .content {
   display: flex;
-  align-items: center;
   justify-content: center;
-  flex-direction: column; /* Center content vertically */
-}
-
-/* Button Styles */
-.buttons {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 15px; /* Increased gap for better spacing */
-}
-
-.join {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-}
-
-.create-btn {
-  width: 100%;
-  padding: 10px; /* Added padding for better touch targets */
-  background-color: #007bff; /* Bootstrap primary color */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s; /* Smooth transition */
-}
-
-.create-btn:hover {
-  background-color: #0056b3; /* Darker shade on hover */
+  min-height: 100vh; /* Full screen height */
+  text-align: center;
 }
 
 /* Message Box Styles */
 .message-box {
-  border: 2px solid #ccc; /* Lighter border color */
-  border-radius: 10px;
-  background-color: #ffffff; /* White background for contrast */
+  border: none;
+  border-radius: 12px;
+  background-color: #ffffff; /* White background for messages */
   height: 80vh;
+  width: 100%;
+  max-width: 800px; /* Max width for better responsiveness */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Softer shadow */
   display: flex;
   flex-direction: column;
-  width: 80vw;
-  align-items: stretch;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  overflow: hidden;
+}
+
+h2 {
+  color: #007bff; /* Same as button for color harmony */
+  margin: 20px 0;
+  font-size: 24px;
+  border-bottom: 1px solid #ccc; /* Divider under header */
+  padding-bottom: 10px;
 }
 
 /* Messages Container */
 .messages {
-  overflow-y: auto; /* Changed to auto for better UX */
   flex: 1;
-  width: 100%;
-  padding: 10px; /* Added padding for better readability */
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f8f9fa; /* Light background for the chat area */
+  border-bottom: 1px solid #ddd;
+  scrollbar-width: thin; /* Webkit and Firefox custom scrollbars */
+}
+
+.text {
+  margin-bottom: 15px;
+  background-color: #f1f1f1; /* Light gray background for messages */
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for messages */
+}
+
+.muted {
+  font-size: 12px;
+  color: #888;
+  margin-left: 10px;
 }
 
 /* Input Styles */
 .inputs {
-  padding: 10px;
   display: flex;
-  border-top: 1px solid #ccc; /* Divider for input area */
-  background-color: #f9f9f9; /* Slightly different background */
+  padding: 15px;
+  background-color: #f1f1f1;
 }
 
-h2 {
-  text-align: center;
-  color: #333; /* Darker text for better readability */
-}
-
-/* Message Input */
 #message {
   flex: 1;
-  padding: 10px; /* Added padding for better touch targets */
-  border: 1px solid #ccc; /* Border for input */
-  border-radius: 5px; /* Rounded corners */
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
 }
 
-/* Text Container */
-.text {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding-left: 10px;
-  padding-right: 10px;
+button {
+  padding: 15px 25px;
+  margin-left: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
 }
 
-/* Muted Text */
-.muted {
-  font-size: 12px; /* Slightly larger for better visibility */
-  color: darkgray;
+button:hover {
+  background-color: #0056b3; /* Darker hover effect */
+}
+
+button:active {
+  background-color: #004080; /* Darker active state */
+}
+
+/* Media Queries for Mobile */
+@media (max-width: 768px) {
+  .message-box {
+    width: 95%;
+  }
+
+  button {
+    padding: 10px 15px;
+  }
+
+  #message {
+    padding: 10px;
+  }
 }
