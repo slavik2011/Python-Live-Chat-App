@@ -1,15 +1,26 @@
+/* General Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0; /* Light background for contrast */
+  margin: 0;
+  padding: 20px;
+}
+
+/* Content Container */
 .content {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column; /* Center content vertically */
 }
 
+/* Button Styles */
 .buttons {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 15px; /* Increased gap for better spacing */
 }
 
 .join {
@@ -20,40 +31,62 @@
 
 .create-btn {
   width: 100%;
+  padding: 10px; /* Added padding for better touch targets */
+  background-color: #007bff; /* Bootstrap primary color */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s; /* Smooth transition */
 }
 
+.create-btn:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+}
+
+/* Message Box Styles */
 .message-box {
-  border-color: black;
-  border-width: 2px;
-  border-style: solid;
+  border: 2px solid #ccc; /* Lighter border color */
   border-radius: 10px;
-  background-color: whitesmoke;
+  background-color: #ffffff; /* White background for contrast */
   height: 80vh;
   display: flex;
   flex-direction: column;
   width: 80vw;
   align-items: stretch;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
 
+/* Messages Container */
 .messages {
-  overflow-y: scroll;
+  overflow-y: auto; /* Changed to auto for better UX */
   flex: 1;
   width: 100%;
+  padding: 10px; /* Added padding for better readability */
 }
 
+/* Input Styles */
 .inputs {
   padding: 10px;
   display: flex;
+  border-top: 1px solid #ccc; /* Divider for input area */
+  background-color: #f9f9f9; /* Slightly different background */
 }
 
 h2 {
   text-align: center;
+  color: #333; /* Darker text for better readability */
 }
 
+/* Message Input */
 #message {
   flex: 1;
+  padding: 10px; /* Added padding for better touch targets */
+  border: 1px solid #ccc; /* Border for input */
+  border-radius: 5px; /* Rounded corners */
 }
 
+/* Text Container */
 .text {
   display: flex;
   flex-direction: row;
@@ -63,7 +96,8 @@ h2 {
   padding-right: 10px;
 }
 
+/* Muted Text */
 .muted {
-  font-size: 10px;
+  font-size: 12px; /* Slightly larger for better visibility */
   color: darkgray;
 }
