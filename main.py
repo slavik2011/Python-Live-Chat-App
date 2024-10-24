@@ -38,7 +38,7 @@ def home():
         
         room = code
         if create != False:
-            room = generate_unique_code(4)
+            room = generate_unique_code(6)
             rooms[room] = {"members": 0, "messages": []}
         elif code not in rooms:
             return render_template("home.html", error="Room does not exist.", code=code, name=name)
@@ -48,6 +48,11 @@ def home():
         return redirect(url_for("room"))
 
     return render_template("home.html")
+
+# creating main room
+
+room = 'MAIN'
+rooms[room] = {"members": 0, "messages": []}
 
 @app.route("/room")
 def room():
@@ -94,7 +99,7 @@ def disconnect():
 
     if room in rooms:
         rooms[room]["members"] -= 1
-        if rooms[room]["members"] <= 0:
+        if rooms[room]["members"] <= 0 and room != 'MAIN':
             del rooms[room]
     
     send({"name": name, "message": "has left the room"}, to=room)
