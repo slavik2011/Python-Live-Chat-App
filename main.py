@@ -6,6 +6,7 @@ from string import ascii_uppercase
 from werkzeug.utils import secure_filename
 from PIL import Image
 from moviepy.editor import VideoFileClip
+import sys
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "hjhjsdahhds"
