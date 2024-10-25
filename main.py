@@ -72,6 +72,24 @@ def room():
 
     return render_template("room.html", code=room, messages=rooms[room]["messages"])
 
+def compress_image(filepath):
+    """ Compress image to save space. """
+    try:
+        img = Image.open(filepath)
+        img.save(filepath, optimize=True, quality=60)  # Compress with quality 60%
+    except Exception as e:
+        print(f"Error compressing image: {e}")
+
+def compress_video(filepath):
+    """ Compress video to save space. """
+    try:
+        clip = VideoFileClip(filepath)
+        compressed_path = filepath.rsplit('.', 1)[0] + "_compressed.mp4"
+        clip.write_videofile(compressed_path, bitrate="500k")  # Reduce video bitrate
+        os.replace(compressed_path, filepath)  # Replace original with compressed version
+    except Exception as e:
+        print(f"Error compressing video: {e}")
+
 @app.route("/upload-image", methods=["POST"])
 def upload_image():
     if 'file' not in request.files:
