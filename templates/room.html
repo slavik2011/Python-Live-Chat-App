@@ -62,7 +62,7 @@
     if (message.value === "" && fileInput.files.length === 0) return;
 
     if (message.value !== "") {
-      socketio.emit("message", { data: message.value, type: 'text' });
+      socketio.emit("message", { message: message.value, type: 'text' });
     }
 
     if (fileInput.files.length > 0) {
@@ -70,7 +70,7 @@
       const reader = new FileReader();
       reader.onloadend = function () {
         const type = file.type.startsWith('image/') ? 'image' : 'video';
-        socketio.emit("message", { data: reader.result, type: type });
+        socketio.emit("message", { message: '\' + type + ':' + reader.result, type: type });
       }
       reader.readAsDataURL(file);
     }
