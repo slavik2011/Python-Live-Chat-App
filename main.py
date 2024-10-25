@@ -110,6 +110,7 @@ def upload_file():
     return {"error": "Invalid file format"}, 400
 
 
+
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
