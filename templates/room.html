@@ -72,7 +72,7 @@
         });
     }
 
-    // If a file is selected, read it and emit as binary data
+    // If a file is selected, read it and emit as base64 data
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -84,22 +84,21 @@
             // Determine the type of file and prepare the message
             if (file.type.startsWith('image/')) {
                 type = 'image';
-                formattedMessage = reader.result; // Use ArrayBuffer for images
+                formattedMessage = `#${reader.result}`; // Use # to indicate an image
             } else if (file.type.startsWith('video/')) {
                 type = 'video';
-                formattedMessage = reader.result; // Use ArrayBuffer for videos
+                formattedMessage = `$${reader.result}`; // Use $ to indicate a video
             }
 
             // Emit the file data through socket
             socketio.emit("message", {
                 message: formattedMessage,
-                type: type,
-                filename: file.name
+                type: type
             });
         };
 
-        // Read the file as an ArrayBuffer
-        reader.readAsArrayBuffer(file);
+        // Read the file as a Data URL (base64)
+        reader.readAsDataURL(file);
     }
 
     // Clear input fields after sending
@@ -113,6 +112,7 @@ document.getElementById("message").addEventListener("keydown", function (e) {
         sendMessage();
     }
 });
+
 
 
 // Allow sending messages with Enter key
