@@ -93,6 +93,8 @@ def upload_file():
         # Determine file type
         file_type = 'image' if file.content_type.startswith('image/') else 'video'
 
+        compress_video(filepath)
+
         return {"fileUrl": file_url, "fileType": file_type}, 200
 
     return {"error": "Invalid file format"}, 400
@@ -114,7 +116,7 @@ def compress_video(filepath):
     try:
         clip = VideoFileClip(filepath)
         compressed_path = filepath.rsplit('.', 1)[0] + "_compressed.mp4"
-        clip.write_videofile(compressed_path, bitrate="500k")  # Reduce video bitrate
+        clip.write_videofile(compressed_path, bitrate="250k")  # Reduce video bitrate
         os.replace(compressed_path, filepath)  # Replace original with compressed version
     except Exception as e:
         print(f"Error compressing video: {e}")
