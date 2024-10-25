@@ -43,7 +43,7 @@
   const sendOrUpload = () => {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
-    const message = document.getElementById("message").value;
+    const message = document.getElementById("message").value.trim(); // Trim whitespace
 
     if (file) {
       const formData = new FormData();
