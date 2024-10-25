@@ -72,59 +72,25 @@ def room():
 
     return render_template("room.html", code=room, messages=rooms[room]["messages"])
 
-@app.route("/upload", methods=["POST"])
-def upload_file():
+@app.route("/upload-image", methods=["POST"])
+def upload_image():
     if 'file' not in request.files:
-        return "No file part", 400
+        return {"error": "No file part"}, 400
     file = request.files['file']
     if file.filename == '':
-        return "No selected file", 400
+        return {"error": "No selected file"}, 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        # Compress the image or video
-        if filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}:
-            compress_image(filepath)
-        elif filename.rsplit('.', 1)[1].lower() in {'mp4', 'mov'}:
-            compress_video(filepath)
+        # Optionally compress the image
+        compress_image(filepath)
 
-        # Notify the room about the uploaded file
-        room = session.get("room")
-        if room in rooms:
-            content = {
-                "name": session.get("name"),
-                "message": f"Shared a file: <a href='/uploads/{filename}' target='_blank'>{filename}</a>"
-            }
-            # Use socketio.emit to broadcast the message to the room
-            socketio.emit("message", content, room=room)
-            rooms[room]["messages"].append(content)
-        return redirect(url_for('room'))
+        img_url = url_for('uploaded_file', filename=filename, _external=True)
+        return {"imgUrl": img_url}
 
-    return "Invalid file format", 400
-
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
-def compress_image(filepath):
-    """ Compress image to save space. """
-    try:
-        img = Image.open(filepath)
-        img.save(filepath, optimize=True, quality=60)  # Compress with quality 60%
-    except Exception as e:
-        print(f"Error compressing image: {e}")
-
-def compress_video(filepath):
-    """ Compress video to save space. """
-    try:
-        clip = VideoFileClip(filepath)
-        compressed_path = filepath.rsplit('.', 1)[0] + "_compressed.mp4"
-        clip.write_videofile(compressed_path, bitrate="500k")  # Reduce video bitrate
-        os.replace(compressed_path, filepath)  # Replace original with compressed version
-    except Exception as e:
-        print(f"Error compressing video: {e}")
+    return {"error": "Invalid file format"}, 400
 
 @socketio.on("message")
 def message(data):
@@ -134,11 +100,12 @@ def message(data):
     
     content = {
         "name": session.get("name"),
-        "message": data["data"]
+        "message": data.get("message", ""),
+        "imgUrl": data.get("imgUrl", None)
     }
     socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} said: {data['data']}")
+    print(f"{session.get('name')} sent: {data.get('message', '')} with image: {data.get('imgUrl', '')}")
 
 @socketio.on("connect")
 def connect(auth):
