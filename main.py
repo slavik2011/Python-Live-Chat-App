@@ -102,7 +102,8 @@ def upload_file():
                 "message": file_url,
                 "type": file_type
             }
-            socketio.emit("message", content, room=room)
+            message(content, room)
+            #socketio.emit("message", content, room=room)
             rooms[room]["messages"].append(content)
 
         return {"fileUrl": file_url, "fileType": file_type}, 200
@@ -133,9 +134,9 @@ def compress_video(filepath):
     except Exception as e:
         print(f"Error compressing video: {e}")
 
-@socketio.on("message")
-def message(data):
-    room = session.get("room")
+#@socketio.on("message")
+def message(data, room):
+    #room = session.get("room")
     if room not in rooms:
         return
     
