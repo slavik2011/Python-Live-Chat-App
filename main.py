@@ -74,22 +74,19 @@ def room():
 
 @app.route("/upload-file", methods=["POST"])
 def upload_file():
-    # Check if 'file' is part of the request
     if 'file' not in request.files:
         return {"error": "No file part"}, 400
 
     file = request.files['file']
     message = request.form.get("message", "")
-
-    # Ensure the filename is not empty
+    
     if file.filename == '':
         return {"error": "No selected file"}, 400
 
-    # Validate the file extension
     if allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)  # Save the file to the specified path
+        file.save(filepath)
 
         # Construct the URL for the uploaded file
         file_url = url_for('uploaded_file', filename=filename, _external=True)
@@ -111,7 +108,9 @@ def upload_file():
         return {"fileUrl": file_url, "fileType": file_type}, 200
 
     return {"error": "Invalid file format"}, 400
-    
+
+
+
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
@@ -149,80 +148,28 @@ def message(data):
     room = session.get("room")
     if room not in rooms:
         return
-
     type, normalized_msg = get_type(data["message"])
     content = {
         "name": session.get("name"),
         "message": normalized_msg,
         "type": type
     }
-    
-    # Handle file saving if the message is a base64-encoded image or video
-    if type in ['image', 'video']:
-        # Decode the base64 message
-        import base64
-
-        # Extract the data from the message
-        header, encoded = normalized_msg.split(',', 1)
-        file_data = base64.b64decode(encoded)
-        
-        # Get the file extension from the header
-        extension = header.split(';')[0].split('/')[-1]
-        filename = f"{session.get('name')}.{extension}"  # Name the file with the sender's name and extension
-
-        # Save the file
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        with open(filepath, 'wb') as f:
-            f.write(file_data)
-
-        # Construct the URL for the uploaded file
-        file_url = url_for('uploaded_file', filename=filename, _external=True)
-
-        content['message'] = file_url  # Use the URL in the message
-
     socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} sent: {data['message']}")
+    print(f"{session.get('name')} said: {data['message']}")
 
-    
-@socketio.on("message")
-def message(data):
+@socketio.on("connect")
+def connect(auth):
     room = session.get("room")
-    if room not in rooms:
+    name = session.get("name")
+    if not room or not name:
         return
-
-    # Handle text and binary messages separately
-    if data['type'] == 'text':
-        content = {
-            "name": session.get("name"),
-            "message": data["message"],
-            "type": 'text'
-        }
-    elif data['type'] in ['image', 'video']:
-        # Save the binary file if it's an image or video
-        file_data = data["message"]  # This will be a binary data string
-        filename = data['filename']  # Get the filename
-        
-        # Save the file to the uploads folder
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        
-        # Convert the binary data to a file
-        with open(filepath, "wb") as f:
-            f.write(file_data)  # Write binary data to file
-
-        # Construct the URL for the uploaded file
-        file_url = url_for('uploaded_file', filename=filename, _external=True)
-
-        content = {
-            "name": session.get("name"),
-            "message": file_url,
-            "type": data['type']
-        }
-
-    socketio.emit("message", content, room=room)
-    rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} sent: {data['message']}")
-
+    if room not in rooms:
+        leave_room(room)
+        return
+    
+    join_room(room)
+    socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
 
 if __name__ == "__main__":
     socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
