@@ -165,18 +165,44 @@ def message(data):
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said: {data['message']}")
     
-@socketio.on("connect")
-def connect(auth):
+@socketio.on("message")
+def message(data):
     room = session.get("room")
-    name = session.get("name")
-    if not room or not name:
-        return
     if room not in rooms:
-        leave_room(room)
         return
-    
-    join_room(room)
-    socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
+
+    # Handle text and binary messages separately
+    if data['type'] == 'text':
+        content = {
+            "name": session.get("name"),
+            "message": data["message"],
+            "type": 'text'
+        }
+    elif data['type'] in ['image', 'video']:
+        # Save the binary file if it's an image or video
+        file_data = data["message"]  # This will be a binary data string
+        filename = data['filename']  # Get the filename
+        
+        # Save the file to the uploads folder
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        
+        # Convert the binary data to a file
+        with open(filepath, "wb") as f:
+            f.write(file_data)  # Write binary data to file
+
+        # Construct the URL for the uploaded file
+        file_url = url_for('uploaded_file', filename=filename, _external=True)
+
+        content = {
+            "name": session.get("name"),
+            "message": file_url,
+            "type": data['type']
+        }
+
+    socketio.emit("message", content, room=room)
+    rooms[room]["messages"].append(content)
+    print(f"{session.get('name')} sent: {data['message']}")
+
 
 if __name__ == "__main__":
     socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
