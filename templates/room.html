@@ -25,33 +25,31 @@
   const createMessage = (name, msg, type) => {
     let content = '';
     if (type === 'text') {
-        content = `
-        <div class="text">
-            <span>
-                <strong>${name}</strong>: ${msg}
-            </span>
-            <span class="muted">
-                ${new Date().toLocaleString()}
-            </span>
-        </div>`;
+      content = `
+      <div class="text">
+          <span>
+              <strong>${name}</strong>: ${msg}
+          </span>
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     } else if (type === 'image' || type === 'video') {
-        content = `
-        <div class="media">
-            <strong>${name}</strong>: <br>
-            ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
-            `<video controls style="max-width: 100%; height: auto;">
-                <source src="${msg}" type="video/mp4">
-                <source src="${msg}" type="video/ogg">
-                Your browser does not support the video tag.
+      content = `
+      <div class="media">
+          <strong>${name}</strong>: <br>
+          ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
+          `<video controls style="max-width: 100%; height: auto;">
+              <source src="${msg}" type="video/mp4">
+              Your browser does not support the video tag.
             </video>`}
-            <span class="muted">
-                ${new Date().toLocaleString()}
-            </span>
-        </div>`;
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     }
     messages.innerHTML += content;
-};
-
+  };
 
   socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type);
@@ -63,19 +61,31 @@
     
     if (message.value === "" && fileInput.files.length === 0) return;
 
+    // Handle text messages
     if (message.value !== "") {
       socketio.emit("message", { message: message.value, type: 'text' });
     }
 
+    // Handle file messages (image or video)
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const reader = new FileReader();
         reader.onloadend = function () {
-            let type = file.type.startsWith('image/') ? 'image' : 'video';
-            const formattedMessage = reader.result; // directly use the data URL
+            let type;
+            let formattedMessage;
+
+            // Determine the file type and set the appropriate type
+            if (file.type.startsWith('image/')) {
+                type = 'image';
+                formattedMessage = reader.result; // Base64 encoded image
+            } else if (file.type.startsWith('video/')) {
+                type = 'video';
+                formattedMessage = reader.result; // Base64 encoded video
+            }
+
             socketio.emit("message", { message: formattedMessage, type: type });
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(file); // Convert to Base64
     }
 
     message.value = "";
@@ -89,6 +99,7 @@
   });
   
 </script>
+
 {% for msg in messages %}
 <script type="text/javascript">
   createMessage("{{msg.name}}", "{{msg.message}}", "{{msg.type}}");
