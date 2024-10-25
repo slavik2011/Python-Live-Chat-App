@@ -83,15 +83,42 @@
   var socketio = io();
 
   const messages = document.getElementById("messages");
+  const messageInput = document.getElementById("message");
+  const fileInput = document.getElementById("file-input");
 
   const createMessage = (name, msg, type) => {
     let content = '';
     if (type === 'text') {
-      content = `...`; // Your existing text message structure
+      content = `
+      <div class="text">
+          <span>
+              <strong>${name}</strong>: ${msg}
+          </span>
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     } else if (type === 'image') {
-      content = `...`; // Your existing image message structure
+      content = `
+      <div class="media">
+          <strong>${name}</strong>: <br>
+          <img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     } else if (type === 'video') {
-      content = `...`; // Your existing video message structure
+      content = `
+      <div class="media">
+          <strong>${name}</strong>: <br>
+          <video controls style="max-width: 100%; height: auto;">
+              <source src="${msg}" type="video/mp4">
+              Your browser does not support the video tag.
+          </video>
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     }
     messages.innerHTML += content;
   };
@@ -101,19 +128,19 @@
   });
 
   const sendMessage = () => {
-    const message = document.getElementById("message");
-    const fileInput = document.getElementById("file-input");
+    const message = messageInput.value;
 
-    if (message.value === "" && fileInput.files.length === 0) return;
+    if (message === "" && fileInput.files.length === 0) return;
 
     // Handle text messages
-    if (message.value !== "") {
-      socketio.emit("message", { message: message.value, type: 'text' });
+    if (message !== "") {
+      socketio.emit("message", { message: message, type: 'text' });
     }
 
     // Handle file messages (image or video)
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
+
         const formData = new FormData();
         formData.append('file', file);
 
@@ -132,25 +159,32 @@
         });
     }
 
-    message.value = "";
+    messageInput.value = "";
     fileInput.value = "";  // Clear file input
-
-    // Enable text input again after file has been sent
-    document.getElementById("message").disabled = false;
+    messageInput.disabled = false; // Enable the text input
   };
 
-  // Disable the text input when a file is selected
-  document.getElementById("file-input").addEventListener("change", function() {
-      if (this.files.length > 0) {
-          document.getElementById("message").disabled = true; // Disable text input
-      }
+  document.getElementById("upload-btn").addEventListener("click", function() {
+    fileInput.click(); // Trigger the hidden file input
   });
 
-  document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {
+  fileInput.addEventListener("change", function() {
+    if (fileInput.files.length > 0) {
+      messageInput.disabled = true; // Disable the text input when a file is uploaded
+    }
+  });
+
+  messageInput.addEventListener("keydown", function (e) {
+    if (e.code === "Enter" && !messageInput.disabled) {
       sendMessage();
     }
   });
+
+  // Allow enabling the text input again after sending the file
+  socketio.on("fileSent", () => {
+    messageInput.disabled = false; // Enable the text input after file is sent
+  });
+
 </script>
 
 {% for msg in messages %}
