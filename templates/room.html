@@ -34,15 +34,23 @@
               ${new Date().toLocaleString()}
           </span>
       </div>`;
-    } else if (type === 'image' || type === 'video') {
+    } else if (type === 'image') {
       content = `
       <div class="media">
           <strong>${name}</strong>: <br>
-          ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
-          `<video controls style="max-width: 100%; height: auto;">
+          <img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
+    } else if (type === 'video') {
+      content = `
+      <div class="media">
+          <strong>${name}</strong>: <br>
+          <video controls style="max-width: 100%; height: auto;">
               <source src="${msg}" type="video/mp4">
               Your browser does not support the video tag.
-            </video>`}
+          </video>
           <span class="muted">
               ${new Date().toLocaleString()}
           </span>
@@ -69,23 +77,24 @@
     // Handle file messages (image or video)
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onloadend = function () {
-            let type;
-            let formattedMessage;
 
-            // Determine the file type and set the appropriate type
-            if (file.type.startsWith('image/')) {
-                type = 'image';
-                formattedMessage = reader.result; // Base64 encoded image
-            } else if (file.type.startsWith('video/')) {
-                type = 'video';
-                formattedMessage = reader.result; // Base64 encoded video
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch("/upload-file", {
+            method: "POST",
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            if (data.fileUrl && data.fileType === 'video') {
+                // Send the file URL to the server via WebSocket
+                socketio.emit("message", { message: data.fileUrl, type: 'video' });
+            } else if (data.fileUrl && data.fileType === 'image') {
+                socketio.emit("message", { message: data.fileUrl, type: 'image' });
             }
-
-            socketio.emit("message", { message: formattedMessage, type: type });
-        };
-        reader.readAsDataURL(file); // Convert to Base64
+        }).catch(error => {
+            console.error("Error uploading file:", error);
+        });
     }
 
     message.value = "";
@@ -97,8 +106,8 @@
       sendMessage();
     }
   });
-  
 </script>
+
 
 {% for msg in messages %}
 <script type="text/javascript">
