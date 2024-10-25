@@ -58,35 +58,49 @@
   });
 
   const sendMessage = () => {
-    const message = document.getElementById("message");
+    const message = document.getElementById("message").value;
     const fileInput = document.getElementById("file-input");
-    
-    if (message.value === "" && fileInput.files.length === 0) return;
 
-    if (message.value !== "") {
-      socketio.emit("message", { message: message.value, type: 'text' });
+    if (message === "" && fileInput.files.length === 0) return;
+
+    const formData = new FormData();
+    if (message !== "") {
+        formData.append("message", message);
     }
 
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-        const reader = new FileReader();
-        reader.onloadend = function () {
-            let type = file.type.startsWith('image/') ? 'image' : 'video';
-            const formattedMessage = reader.result; // directly use the data URL
-            socketio.emit("message", { message: formattedMessage, type: type });
-        };
-        reader.readAsDataURL(file);
+        formData.append("file", file);
     }
 
-    message.value = "";
-    fileInput.value = "";  // Clear file input
-  };
+    // Use fetch to send the form data to the server
+    fetch("/upload-file", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.fileUrl) {
+            // Emit the file URL to the chat room via socket
+            socketio.emit("message", {
+                message: data.fileUrl,
+                type: fileInput.files[0].type.startsWith('video/') ? 'video' : 'image'
+            });
+        }
+        // Clear inputs after sending
+        document.getElementById("message").value = "";
+        fileInput.value = ""; // Clear file input
+    })
+    .catch(error => console.error('Error uploading file:', error));
+};
 
-  document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
-      sendMessage();
+// Allow sending messages with Enter key
+document.getElementById("message").addEventListener("keydown", function (e) {
+    if (e.code === "Enter") {  // Check if the pressed key is "Enter"
+        sendMessage();
     }
-  });
+});
+
   
 </script>
 {% for msg in messages %}
