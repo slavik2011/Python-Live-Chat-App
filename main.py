@@ -74,42 +74,41 @@ def room():
 
 @app.route("/upload-file", methods=["POST"])
 def upload_file():
-    if 'file' not in request.files and 'message' not in request.form:
-        print("Error: No file or message part in the request.")
-        return {"error": "No file or message part"}, 400
-    
-    file = request.files.get('file')
-    message = request.form.get('message', '')
+    if 'file' not in request.files:
+        return {"error": "No file part"}, 400
 
-    # Check if file is present and has a filename
-    if file and file.filename == '':
-        print("Error: No selected file.")
-        return {"error": "No selected file"}, 400
+    file = request.files['file']
+    message = request.form.get("message", "")
     
-    if file and allowed_file(file.filename):
+    if file.filename == '':
+        return {"error": "No selected file"}, 400
+
+    if allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        
-        # Check if the filename has an extension
-        if '.' not in filename:
-            print("Error: File has no extension.")
-            return {"error": "File has no extension"}, 400
-        
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Optionally compress the image or video
-        file_extension = filename.rsplit('.', 1)[1].lower()
-        if file_extension in {'png', 'jpg', 'jpeg', 'gif'}:
-            compress_image(filepath)
-        elif file_extension in {'mp4', 'mov'}:
-            compress_video(filepath)
-
-        # Correctly generate the URL for the uploaded file
+        # Construct the URL for the uploaded file
         file_url = url_for('uploaded_file', filename=filename, _external=True)
-        return {"fileUrl": file_url, "fileType": file_extension, "message": message}
-    
-    print("Error: Invalid file format.")
+
+        # Determine file type
+        file_type = 'image' if file.content_type.startswith('image/') else 'video'
+
+        # Emit the message with the file URL
+        room = session.get("room")
+        if room in rooms:
+            content = {
+                "name": session.get("name"),
+                "message": file_url,
+                "type": file_type
+            }
+            socketio.emit("message", content, room=room)
+            rooms[room]["messages"].append(content)
+
+        return {"fileUrl": file_url, "fileType": file_type}, 200
+
     return {"error": "Invalid file format"}, 400
+
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
