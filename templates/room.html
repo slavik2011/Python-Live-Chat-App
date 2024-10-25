@@ -25,103 +25,65 @@
   const createMessage = (name, msg, type) => {
     let content = '';
     if (type === 'text') {
-        content = `
-        <div class="text">
-            <span>
-                <strong>${name}</strong>: ${msg}
-            </span>
-            <span class="muted">
-                ${new Date().toLocaleString()}
-            </span>
-        </div>`;
+      content = `
+      <div class="text">
+          <span>
+              <strong>${name}</strong>: ${msg}
+          </span>
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     } else if (type === 'image' || type === 'video') {
-        content = `
-        <div class="media">
-            <strong>${name}</strong>: <br>
-            ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
-            `<video controls style="max-width: 100%; height: auto;">
-                <source src="${msg}" type="video/mp4">
-                <source src="${msg}" type="video/ogg">
-                Your browser does not support the video tag.
+      content = `
+      <div class="media">
+          <strong>${name}</strong>: <br>
+          ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
+          `<video controls style="max-width: 100%; height: auto;">
+              <source src="${msg}" type="video/mp4">
+              Your browser does not support the video tag.
             </video>`}
-            <span class="muted">
-                ${new Date().toLocaleString()}
-            </span>
-        </div>`;
+          <span class="muted">
+              ${new Date().toLocaleString()}
+          </span>
+      </div>`;
     }
     messages.innerHTML += content;
-};
-
+  };
 
   socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type);
   });
 
   const sendMessage = () => {
-    const messageInput = document.getElementById("message");
+    const message = document.getElementById("message");
     const fileInput = document.getElementById("file-input");
+    
+    if (message.value === "" && fileInput.files.length === 0) return;
 
-    // If both message and file are empty, do nothing
-    if (messageInput.value === "" && fileInput.files.length === 0) return;
-
-    // If there's a text message, emit it as text
-    if (messageInput.value !== "") {
-        socketio.emit("message", {
-            message: messageInput.value,
-            type: 'text'
-        });
+    if (message.value !== "") {
+      socketio.emit("message", { message: message.value, type: 'text' });
     }
 
-    // If a file is selected, read it and emit as base64 data
     if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onloadend = function () {
-            let type;
-            let formattedMessage;
-
-            // Determine the type of file and prepare the message
-            if (file.type.startsWith('image/')) {
-                type = 'image';
-                formattedMessage = `#${reader.result}`; // Use # to indicate an image
-            } else if (file.type.startsWith('video/')) {
-                type = 'video';
-                formattedMessage = `$${reader.result}`; // Use $ to indicate a video
-            }
-
-            // Emit the file data through socket
-            socketio.emit("message", {
-                message: formattedMessage,
-                type: type
-            });
-        };
-
-        // Read the file as a Data URL (base64)
-        reader.readAsDataURL(file);
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onloadend = function () {
+        const type = file.type.startsWith('image/') ? 'image' : 'video';
+        socketio.emit("message", { message: '\' + type + ':' + reader.result, type: type });
+      }
+      reader.readAsDataURL(file);
     }
 
-    // Clear input fields after sending
-    messageInput.value = "";
-    fileInput.value = ""; // Clear file input
-};
+    message.value = "";
+    fileInput.value = "";  // Clear file input
+  };
 
-// Allow sending messages with the Enter key
-document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {  // Check if the pressed key is "Enter"
-        sendMessage();
+  document.getElementById("message").addEventListener("keydown", function (e) {
+    if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
+      sendMessage();
     }
-});
-
-
-
-// Allow sending messages with Enter key
-document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {  // Check if the pressed key is "Enter"
-        sendMessage();
-    }
-});
-
+  });
   
 </script>
 {% for msg in messages %}
