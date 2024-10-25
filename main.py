@@ -154,7 +154,7 @@ def message(data):
         "message": normalized_msg,
         "type": type
     }
-    socketio.emit("messager", content, room=room)
+    socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said: {data['message']}")
 
