@@ -78,7 +78,6 @@ def upload_file():
         return {"error": "No file part"}, 400
 
     file = request.files['file']
-    message = request.form.get("message", "")
     
     if file.filename == '':
         return {"error": "No selected file"}, 400
@@ -94,22 +93,9 @@ def upload_file():
         # Determine file type
         file_type = 'image' if file.content_type.startswith('image/') else 'video'
 
-        # Emit the message with the file URL
-        room = session.get("room")
-        if room in rooms:
-            content = {
-                "name": session.get("name"),
-                "message": file_url,
-                "type": file_type
-            }
-            socketio.emit("message", content, room=room)
-            rooms[room]["messages"].append(content)
-
         return {"fileUrl": file_url, "fileType": file_type}, 200
 
     return {"error": "Invalid file format"}, 400
-
-
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
