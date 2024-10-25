@@ -1,33 +1,49 @@
-{% extends 'base.html' %} {% block content %}
-<div class="message-box">
-  <h2>Chat Room: {{code}}</h2>
-  <div class="messages" id="messages"></div>
-  <div class="inputs">
-    <input type="text" rows="3" placeholder="Message" name="message" id="message" />
-    <button type="button" name="send" id="send-btn" onClick="sendMessage()">Send</button>
-    <form action="/upload" method="POST" enctype="multipart/form-data" style="display: inline;">
-      <input type="file" name="file" />
-      <button type="submit">Upload File</button>
-    </form>
-  </div>
-</div>
 <script type="text/javascript">
   var socketio = io();
 
   const messages = document.getElementById("messages");
 
   const createMessage = (name, msg) => {
-    const content = `
-    <div class="text">
-        <span>
+    let content = '';
+
+    if (msg.includes("Shared a file:")) {
+      // File-sharing message
+      content = `
+        <div class="text file-message">
+          <span>
             <strong>${name}</strong>: ${msg}
-        </span>
-        <span class="muted">
+          </span>
+          <span class="muted">
             ${new Date().toLocaleString()}
-        </span>
-    </div>
-    `;
+          </span>
+        </div>
+      `;
+    } else if (msg.includes("has entered the room") || msg.includes("has left the room")) {
+      // System notification
+      content = `
+        <div class="text system-message">
+          <em>${name} ${msg}</em>
+          <span class="muted">
+            ${new Date().toLocaleString()}
+          </span>
+        </div>
+      `;
+    } else {
+      // Regular message
+      content = `
+        <div class="text chat-message">
+          <span>
+            <strong>${name}</strong>: ${msg}
+          </span>
+          <span class="muted">
+            ${new Date().toLocaleString()}
+          </span>
+        </div>
+      `;
+    }
+
     messages.innerHTML += content;
+    messages.scrollTop = messages.scrollHeight;  // Auto-scroll to bottom
   };
 
   socketio.on("message", (data) => {
@@ -40,16 +56,11 @@
     socketio.emit("message", { data: message.value });
     message.value = "";
   };
+
   var wage = document.getElementById("message");
   wage.addEventListener("keydown", function (e) {
-     if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
-       sendMessage();
+    if (e.code === "Enter") {
+      sendMessage();
     }
   });
-  
 </script>
-{% for msg in messages %}
-<script type="text/javascript">
-  createMessage("{{msg.name}}", "{{msg.message}}");
-</script>
-{% endfor %} {% endblock %}
