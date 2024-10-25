@@ -93,7 +93,7 @@ def upload_file():
         # Determine file type
         file_type = 'image' if file.content_type.startswith('image/') else 'video'
 
-        compress_video(filepath)
+        compress_image(filepath) if file_type == 'image' else compress_video(filepath)
 
         return {"fileUrl": file_url, "fileType": file_type}, 200
 
@@ -107,7 +107,7 @@ def compress_image(filepath):
     """ Compress image to save space. """
     try:
         img = Image.open(filepath)
-        img.save(filepath, optimize=True, quality=60)  # Compress with quality 60%
+        img.save(filepath, optimize=True, quality=40)  # Compress with quality 40%
     except Exception as e:
         print(f"Error compressing image: {e}")
 
