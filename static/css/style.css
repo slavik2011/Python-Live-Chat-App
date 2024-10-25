@@ -1,10 +1,10 @@
 /* General Styles */
 body {
-  font-family: 'Roboto', sans-serif; /* Updated font */
-  background-color: #e9ecef; /* Slightly darker background for better contrast */
+  font-family: 'Roboto', sans-serif; /* Modern and clean font */
+  background-color: #f0f2f5; /* Light background like modern messenger apps */
   margin: 0;
   padding: 20px;
-  color: #333; /* Standard text color */
+  color: #333;
 }
 
 .content {
@@ -22,18 +22,19 @@ body {
   background-color: #ffffff; /* White background for messages */
   height: 80vh;
   width: 100%;
-  max-width: 800px; /* Max width for better responsiveness */
+  max-width: 700px; /* Slightly smaller width for a cleaner look */
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); /* Softer shadow */
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin: 20px auto; /* Center the message box */
 }
 
 h2 {
-  color: #007bff; /* Same as button for color harmony */
+  color: #007bff;
   margin: 20px 0;
-  font-size: 24px;
-  border-bottom: 1px solid #ccc; /* Divider under header */
+  font-size: 20px;
+  border-bottom: 1px solid #ddd;
   padding-bottom: 10px;
 }
 
@@ -42,61 +43,124 @@ h2 {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
-  background-color: #f8f9fa; /* Light background for the chat area */
-  border-bottom: 1px solid #ddd;
-  scrollbar-width: thin; /* Webkit and Firefox custom scrollbars */
+  background-color: #e5ddd5; /* Soft background color for chat area */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  scrollbar-width: thin;
 }
 
-.text {
-  margin-bottom: 15px;
-  background-color: #f1f1f1; /* Light gray background for messages */
-  padding: 10px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for messages */
+/* Sent and Received Message Styles */
+.message {
+  max-width: 60%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  word-wrap: break-word;
+}
+
+.message.sent {
+  background-color: #dcf8c6; /* Greenish bubble for sent messages */
+  align-self: flex-end;
+  text-align: right;
+}
+
+.message.received {
+  background-color: #ffffff;
+  align-self: flex-start;
 }
 
 .muted {
   font-size: 12px;
   color: #888;
-  margin-left: 10px;
+  margin-top: 5px;
 }
 
 /* Input Styles */
 .inputs {
   display: flex;
   padding: 15px;
-  background-color: #f1f1f1;
+  background-color: #ffffff;
+  border-top: 1px solid #ddd;
 }
 
 #message {
   flex: 1;
-  padding: 15px;
+  padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 20px;
   font-size: 16px;
+  outline: none;
 }
 
 button {
-  padding: 15px 25px;
+  padding: 12px 20px;
   margin-left: 10px;
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s;
 }
 
 button:hover {
-  background-color: #0056b3; /* Darker hover effect */
+  background-color: #0056b3;
 }
 
 button:active {
-  background-color: #004080; /* Darker active state */
+  background-color: #004080;
+}
+
+/* Centered Elements for Home Page */
+form.buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto; /* Center the form on the page */
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+form h3 {
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+form div {
+  width: 100%;
+}
+
+form input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+form button {
+  padding: 12px;
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+form button:hover {
+  background-color: #0056b3;
 }
 
 /* Media Queries for Mobile */
