@@ -87,36 +87,11 @@
   const createMessage = (name, msg, type) => {
     let content = '';
     if (type === 'text') {
-      content = `
-      <div class="text">
-          <span>
-              <strong>${name}</strong>: ${msg}
-          </span>
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
+      content = `...`; // Your existing text message structure
     } else if (type === 'image') {
-      content = `
-      <div class="media">
-          <strong>${name}</strong>: <br>
-          <img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
+      content = `...`; // Your existing image message structure
     } else if (type === 'video') {
-      content = `
-      <div class="media">
-          <strong>${name}</strong>: <br>
-          <video controls style="max-width: 100%; height: auto;">
-              <source src="${msg}" type="video/mp4">
-              Your browser does not support the video tag.
-          </video>
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
+      content = `...`; // Your existing video message structure
     }
     messages.innerHTML += content;
   };
@@ -128,7 +103,7 @@
   const sendMessage = () => {
     const message = document.getElementById("message");
     const fileInput = document.getElementById("file-input");
-    
+
     if (message.value === "" && fileInput.files.length === 0) return;
 
     // Handle text messages
@@ -139,7 +114,6 @@
     // Handle file messages (image or video)
     if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
-
         const formData = new FormData();
         formData.append('file', file);
 
@@ -160,16 +134,22 @@
 
     message.value = "";
     fileInput.value = "";  // Clear file input
+
+    // Enable text input again after file has been sent
+    document.getElementById("message").disabled = false;
   };
+
+  // Disable the text input when a file is selected
+  document.getElementById("file-input").addEventListener("change", function() {
+      if (this.files.length > 0) {
+          document.getElementById("message").disabled = true; // Disable text input
+      }
+  });
 
   document.getElementById("message").addEventListener("keydown", function (e) {
     if (e.code === "Enter") {
       sendMessage();
     }
-  });
-
-  document.getElementById("upload-btn").addEventListener("click", function() {
-    document.getElementById("file-input").click(); // Trigger the hidden file input
   });
 </script>
 
