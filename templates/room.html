@@ -85,6 +85,7 @@
   const messages = document.getElementById("messages");
   const messageInput = document.getElementById("message");
   const fileInput = document.getElementById("file-input");
+  const sendBtn = document.getElementById("send-btn");
 
   const createMessage = (name, msg, type) => {
     let content = '';
@@ -162,6 +163,7 @@
     messageInput.value = "";
     fileInput.value = "";  // Clear file input
     messageInput.disabled = false; // Enable the text input
+    sendBtn.innerText = 'Send'; // Reset button text
   };
 
   document.getElementById("upload-btn").addEventListener("click", function() {
@@ -171,6 +173,7 @@
   fileInput.addEventListener("change", function() {
     if (fileInput.files.length > 0) {
       messageInput.disabled = true; // Disable the text input when a file is uploaded
+      sendBtn.innerText = 'File Selected'; // Change button text to "File Selected"
     }
   });
 
@@ -183,6 +186,7 @@
   // Allow enabling the text input again after sending the file
   socketio.on("fileSent", () => {
     messageInput.disabled = false; // Enable the text input after file is sent
+    sendBtn.innerText = 'Send'; // Reset button text
   });
 
 </script>
