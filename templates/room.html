@@ -20,11 +20,12 @@
     let content = '';
 
     if (msg.includes("Shared a file:")) {
-      // File-sharing message
+      // File-sharing message: render the HTML directly
       content = `
         <div class="text file-message">
           <span>
-            <strong>${name}</strong>: ${msg}
+            <strong>${name}</strong>: 
+            ${msg} <!-- msg already contains the <a> tag for the file -->
           </span>
           <span class="muted">
             ${new Date().toLocaleString()}
@@ -76,7 +77,42 @@
       sendMessage();
     }
   });
+
+  // Handle file uploads with AJAX (no redirect)
+  const fileInput = document.getElementById('file-input');
+  const fileForm = document.getElementById('file-form');
+
+  fileForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const formData = new FormData();
+    const file = fileInput.files[0];
+    formData.append('file', file);
+
+    // Use fetch or XMLHttpRequest for the AJAX file upload
+    fetch('/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log('File uploaded successfully');
+        // Notify the room about the file
+        socketio.emit('message', { data: data.message });
+      } else {
+        console.error('File upload failed:', data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error uploading file:', error);
+    });
+
+    // Reset the file input after upload
+    fileInput.value = '';
+  });
 </script>
+
 {% for msg in messages %}
 <script type="text/javascript">
   createMessage("{{msg.name}}", "{{msg.message}}");
