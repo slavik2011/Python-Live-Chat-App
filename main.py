@@ -72,22 +72,22 @@ def room():
 
     return render_template("room.html", code=room, messages=rooms[room]["messages"])
 
-@app.route("/uploads/<filename>")
-def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
-
 @app.route("/upload-file", methods=["POST"])
 def upload_file():
-    if 'file' not in request.files:
-        return {"error": "No file part"}, 400
-    file = request.files['file']
-    if file.filename == '':
+    if 'file' not in request.files and 'message' not in request.form:
+        return {"error": "No file or message part"}, 400
+    
+    file = request.files.get('file')
+    message = request.form.get('message', '')
+
+    if file and file.filename == '':
         return {"error": "No selected file"}, 400
+    
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        
+
         # Optionally compress the image or video
         if filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}:
             compress_image(filepath)
@@ -96,9 +96,14 @@ def upload_file():
 
         # Correctly generate the URL for the uploaded file
         file_url = url_for('uploaded_file', filename=filename, _external=True)
-        return {"fileUrl": file_url, "fileType": filename.rsplit('.', 1)[1].lower()}
-
+        file_type = filename.rsplit('.', 1)[1].lower()
+        return {"fileUrl": file_url, "fileType": file_type, "message": message}
+    
     return {"error": "Invalid file format"}, 400
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 def compress_image(filepath):
     """ Compress image to save space. """
@@ -126,13 +131,13 @@ def message(data):
     
     content = {
         "name": session.get("name"),
-        "message": data.get("message", ""),
-        "fileUrl": data.get("fileUrl", None),
-        "fileType": data.get("fileType", None)
+        "message": data["message"],
+        "fileUrl": data.get("fileUrl", ""),
+        "fileType": data.get("fileType", "")
     }
     socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} sent: {data.get('message', '')} with file: {data.get('fileUrl', '')}")
+    print(f"{session.get('name')} said: {data['message']}")
 
 @socketio.on("connect")
 def connect(auth):
@@ -145,23 +150,7 @@ def connect(auth):
         return
     
     join_room(room)
-    socketio.emit("message", {"name": name, "message": "has entered the room"}, room=room)
-    rooms[room]["members"] += 1
-    print(f"{name} joined room {room}")
-
-@socketio.on("disconnect")
-def disconnect():
-    room = session.get("room")
-    name = session.get("name")
-    leave_room(room)
-
-    if room in rooms:
-        rooms[room]["members"] -= 1
-        if rooms[room]["members"] <= 0 and room != 'MAIN':
-            del rooms[room]
-    
-    socketio.emit("message", {"name": name, "message": "has left the room"}, room=room)
-    print(f"{name} has left the room {room}")
+    socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
+    socketio.run(app, debug=True)
