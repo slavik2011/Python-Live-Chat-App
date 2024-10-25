@@ -72,6 +72,31 @@ def room():
 
     return render_template("room.html", code=room, messages=rooms[room]["messages"])
 
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+
+@app.route("/upload-image", methods=["POST"])
+def upload_image():
+    if 'file' not in request.files:
+        return {"error": "No file part"}, 400
+    file = request.files['file']
+    if file.filename == '':
+        return {"error": "No selected file"}, 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        # Optionally compress the image
+        compress_image(filepath)
+
+        # Correctly generate the URL for the uploaded file
+        img_url = url_for('uploaded_file', filename=filename, _external=True)
+        return {"imgUrl": img_url}
+
+    return {"error": "Invalid file format"}, 400
+
 def compress_image(filepath):
     """ Compress image to save space. """
     try:
@@ -89,26 +114,6 @@ def compress_video(filepath):
         os.replace(compressed_path, filepath)  # Replace original with compressed version
     except Exception as e:
         print(f"Error compressing video: {e}")
-
-@app.route("/upload-image", methods=["POST"])
-def upload_image():
-    if 'file' not in request.files:
-        return {"error": "No file part"}, 400
-    file = request.files['file']
-    if file.filename == '':
-        return {"error": "No selected file"}, 400
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        
-        # Optionally compress the image
-        compress_image(filepath)
-
-        img_url = url_for('uploaded_file', filename=filename, _external=True)
-        return {"imgUrl": img_url}
-
-    return {"error": "Invalid file format"}, 400
 
 @socketio.on("message")
 def message(data):
