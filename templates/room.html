@@ -151,8 +151,10 @@
         }).then(response => response.json())
         .then(data => {
             if (data.fileUrl && data.fileType === 'video') {
+                socketio.emit("message", { message: 'sending video...', type: 'text' })
                 socketio.emit("message", { message: data.fileUrl, type: 'video' });
             } else if (data.fileUrl && data.fileType === 'image') {
+                socketio.emit("message", { message: 'sending image...', type: 'text' })
                 socketio.emit("message", { message: data.fileUrl, type: 'image' });
             }
         }).catch(error => {
