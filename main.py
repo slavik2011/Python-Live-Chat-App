@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for, send_from_directory
-from flask_socketio import join_room, leave_room, send, SocketIO
+from flask_socketio import join_room, leave_room, emit, SocketIO
 import random
 import os
 from string import ascii_uppercase
@@ -97,7 +97,8 @@ def upload_file():
                 "name": session.get("name"),
                 "message": f"Shared a file: <a href='/uploads/{filename}' target='_blank'>{filename}</a>"
             }
-            send(content, to=room)
+            # Use socketio.emit to broadcast the message to the room
+            socketio.emit("message", content, room=room)
             rooms[room]["messages"].append(content)
         return redirect(url_for('room'))
 
@@ -135,7 +136,7 @@ def message(data):
         "name": session.get("name"),
         "message": data["data"]
     }
-    send(content, to=room)
+    socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said: {data['data']}")
 
@@ -150,7 +151,7 @@ def connect(auth):
         return
     
     join_room(room)
-    send({"name": name, "message": "has entered the room"}, to=room)
+    socketio.emit("message", {"name": name, "message": "has entered the room"}, room=room)
     rooms[room]["members"] += 1
     print(f"{name} joined room {room}")
 
@@ -165,7 +166,7 @@ def disconnect():
         if rooms[room]["members"] <= 0 and room != 'MAIN':
             del rooms[room]
     
-    send({"name": name, "message": "has left the room"}, to=room)
+    socketio.emit("message", {"name": name, "message": "has left the room"}, room=room)
     print(f"{name} has left the room {room}")
 
 if __name__ == "__main__":
