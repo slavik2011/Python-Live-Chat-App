@@ -142,10 +142,9 @@ def message(data):
     content = {
         "name": session.get("name"),
         "message": data["message"],
-        "fileUrl": data.get("fileUrl", ""),
-        "fileType": data.get("fileType", "")
+        "type": 'text'
     }
-    socketio.emit("message", content, room=room)
+    socketio.emit("messager", content, room=room)
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said: {data['message']}")
 
