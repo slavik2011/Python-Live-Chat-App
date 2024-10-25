@@ -148,16 +148,22 @@ def message(data):
     room = session.get("room")
     if room not in rooms:
         return
-    type, normalized_msg = get_type(data["message"])
+
+    # Get the type and normalized message from the data
+    type, normalized_msg = data["type"], data["message"]
+
+    # Construct the content dictionary
     content = {
         "name": session.get("name"),
         "message": normalized_msg,
         "type": type
     }
+
+    # Emit the message to the room and append to the messages list
     socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said: {data['message']}")
-
+    
 @socketio.on("connect")
 def connect(auth):
     room = session.get("room")
