@@ -80,24 +80,30 @@ def upload_file():
     file = request.files.get('file')
     message = request.form.get('message', '')
 
+    # Check if file is present and has a filename
     if file and file.filename == '':
         return {"error": "No selected file"}, 400
     
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
+        
+        # Check if the filename has an extension
+        if '.' not in filename:
+            return {"error": "File has no extension"}, 400
+        
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
         # Optionally compress the image or video
-        if filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}:
+        file_extension = filename.rsplit('.', 1)[1].lower()
+        if file_extension in {'png', 'jpg', 'jpeg', 'gif'}:
             compress_image(filepath)
-        elif filename.rsplit('.', 1)[1].lower() in {'mp4', 'mov'}:
+        elif file_extension in {'mp4', 'mov'}:
             compress_video(filepath)
 
         # Correctly generate the URL for the uploaded file
         file_url = url_for('uploaded_file', filename=filename, _external=True)
-        file_type = filename.rsplit('.', 1)[1].lower()
-        return {"fileUrl": file_url, "fileType": file_type, "message": message}
+        return {"fileUrl": file_url, "fileType": file_extension, "message": message}
     
     return {"error": "Invalid file format"}, 400
 
@@ -153,4 +159,4 @@ def connect(auth):
     socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
+    socketio.run(app, debug=True)
