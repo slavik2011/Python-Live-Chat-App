@@ -10,13 +10,59 @@
       placeholder="Message"
       name="message"
       id="message"
+      class="message-input"
     />
-    <input type="file" id="file-input" accept="image/*,video/*" />
-    <button type="button" name="send" id="send-btn" onClick="sendMessage()">
-      Send
-    </button>
+    <div class="file-input-container">
+      <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
+      <button type="button" name="send" id="send-btn" onClick="sendMessage()" class="send-btn">
+        Send
+      </button>
+    </div>
   </div>
 </div>
+
+<style>
+  .message-input {
+    width: 70%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+  }
+
+  .file-input-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .file-input {
+    display: none; /* Hide the file input */
+  }
+
+  .send-btn {
+    padding: 10px 15px;
+    background-color: #28a745; /* Green background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .send-btn:hover {
+    background-color: #218838; /* Darker green on hover */
+  }
+
+  .send-btn:disabled {
+    background-color: #ccc; /* Gray background for disabled state */
+    cursor: not-allowed;
+  }
+
+  .send-btn:focus {
+    outline: none; /* Remove focus outline */
+  }
+</style>
+
 <script type="text/javascript">
   var socketio = io();
 
@@ -87,7 +133,6 @@
         }).then(response => response.json())
         .then(data => {
             if (data.fileUrl && data.fileType === 'video') {
-                // Send the file URL to the server via WebSocket
                 socketio.emit("message", { message: data.fileUrl, type: 'video' });
             } else if (data.fileUrl && data.fileType === 'image') {
                 socketio.emit("message", { message: data.fileUrl, type: 'image' });
@@ -102,12 +147,11 @@
   };
 
   document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
+    if (e.code === "Enter") {
       sendMessage();
     }
   });
 </script>
-
 
 {% for msg in messages %}
 <script type="text/javascript">
