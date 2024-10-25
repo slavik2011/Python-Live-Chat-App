@@ -1,12 +1,24 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% block content %}
 <div class="message-box">
   <h2>Chat Room: {{code}}</h2>
   <div class="messages" id="messages"></div>
   <div class="inputs">
-    <input type="text" rows="3" placeholder="Message" name="message" id="message" />
-    <input type="file" id="file" accept="image/*,video/*" />
-    <button type="button" name="send" id="send-btn" onClick="sendMessage()">Send</button>
+    <input
+      type="text"
+      placeholder="Message"
+      name="message"
+      id="message"
+    />
+    <input
+      type="file"
+      name="file"
+      id="file"
+      accept="image/*,video/*"
+    />
+    <button type="button" name="send" id="send-btn" onClick="sendMessage()">
+      Send
+    </button>
   </div>
 </div>
 <script type="text/javascript">
@@ -15,7 +27,7 @@
   const messages = document.getElementById("messages");
 
   const createMessage = (name, msg, fileUrl, fileType) => {
-    const content = `
+    let content = `
     <div class="text">
         <span>
             <strong>${name}</strong>: ${msg}
@@ -23,11 +35,20 @@
         <span class="muted">
             ${new Date().toLocaleString()}
         </span>
-        ${fileUrl ? (fileType === 'mp4' || fileType === 'mov' ? 
-            `<video controls width="300"><source src="${fileUrl}" type="video/${fileType}">Your browser does not support the video tag.</video>` : 
-            `<img src="${fileUrl}" alt="Uploaded Image" style="max-width: 300px; max-height: 300px;">`) : ''}
     </div>
     `;
+
+    if (fileUrl) {
+      if (fileType === 'image') {
+        content += `<img src="${fileUrl}" alt="Image" style="max-width: 100%; height: auto;"/>`;
+      } else if (fileType === 'video') {
+        content += `<video controls style="max-width: 100%; height: auto;">
+                        <source src="${fileUrl}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>`;
+      }
+    }
+    
     messages.innerHTML += content;
   };
 
@@ -36,42 +57,51 @@
   });
 
   const sendMessage = () => {
-    const message = document.getElementById("message");
+    const messageInput = document.getElementById("message");
     const fileInput = document.getElementById("file");
     
-    if (message.value === "" && !fileInput.files.length) return;
+    // If both message and file input are empty, do nothing
+    if (messageInput.value === "" && !fileInput.files.length) return;
 
     const formData = new FormData();
-    if (message.value) {
-      formData.append('message', message.value);
+    if (messageInput.value) {
+        formData.append('message', messageInput.value);
     }
     if (fileInput.files.length > 0) {
-      formData.append('file', fileInput.files[0]);
+        formData.append('file', fileInput.files[0]);
     }
 
     fetch('/upload-file', {
-      method: 'POST',
-      body: formData
+        method: 'POST',
+        body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
-      if (data.fileUrl) {
-        socketio.emit("message", {
-          message: message.value,
-          fileUrl: data.fileUrl,
-          fileType: data.fileType
-        });
-      }
+        if (data.fileUrl) {
+            socketio.emit("message", {
+                message: messageInput.value,
+                fileUrl: data.fileUrl,
+                fileType: data.fileType
+            });
+        }
+        // Clear the inputs
+        messageInput.value = "";
+        fileInput.value = "";
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
     });
-
-    message.value = "";
-    fileInput.value = "";
   };
 
   var wage = document.getElementById("message");
   wage.addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
-      sendMessage();
+     if (e.code === "Enter") {
+       sendMessage();
     }
   });
   
@@ -80,5 +110,5 @@
 <script type="text/javascript">
   createMessage("{{msg.name}}", "{{msg.message}}", "{{msg.fileUrl}}", "{{msg.fileType}}");
 </script>
-{% endfor %} 
+{% endfor %}
 {% endblock %}
