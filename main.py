@@ -75,12 +75,10 @@ def room():
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:
-        return {"success": False, "error": "No file part"}, 400
-
+        return "No file part", 400
     file = request.files['file']
     if file.filename == '':
-        return {"success": False, "error": "No selected file"}, 400
-
+        return "No selected file", 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -92,23 +90,19 @@ def upload_file():
         elif filename.rsplit('.', 1)[1].lower() in {'mp4', 'mov'}:
             compress_video(filepath)
 
-        # Create the file link message
-        file_link = f"Shared a file: <a href='/uploads/{filename}' target='_blank'>{filename}</a>"
-        
         # Notify the room about the uploaded file
         room = session.get("room")
         if room in rooms:
             content = {
                 "name": session.get("name"),
-                "message": file_link
+                "message": f"Shared a file: <a href='/uploads/{filename}' target='_blank'>{filename}</a>"
             }
+            # Use socketio.emit to broadcast the message to the room
             socketio.emit("message", content, room=room)
             rooms[room]["messages"].append(content)
-        
-        # Return JSON response to the client
-        return {"success": True, "message": file_link}
+        return redirect(url_for('room'))
 
-    return {"success": False, "error": "Invalid file format"}, 400
+    return "Invalid file format", 400
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
