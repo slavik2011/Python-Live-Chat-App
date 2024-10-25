@@ -25,31 +25,33 @@
   const createMessage = (name, msg, type) => {
     let content = '';
     if (type === 'text') {
-      content = `
-      <div class="text">
-          <span>
-              <strong>${name}</strong>: ${msg}
-          </span>
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
+        content = `
+        <div class="text">
+            <span>
+                <strong>${name}</strong>: ${msg}
+            </span>
+            <span class="muted">
+                ${new Date().toLocaleString()}
+            </span>
+        </div>`;
     } else if (type === 'image' || type === 'video') {
-      content = `
-      <div class="media">
-          <strong>${name}</strong>: <br>
-          ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
-          `<video controls style="max-width: 100%; height: auto;">
-              <source src="${msg}" type="video/mp4">
-              Your browser does not support the video tag.
+        content = `
+        <div class="media">
+            <strong>${name}</strong>: <br>
+            ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
+            `<video controls style="max-width: 100%; height: auto;">
+                <source src="${msg}" type="video/mp4">
+                <source src="${msg}" type="video/ogg">
+                Your browser does not support the video tag.
             </video>`}
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
+            <span class="muted">
+                ${new Date().toLocaleString()}
+            </span>
+        </div>`;
     }
     messages.innerHTML += content;
-  };
+};
+
 
   socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type);
