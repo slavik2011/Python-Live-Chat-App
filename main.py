@@ -11,7 +11,7 @@ import sys
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "hjhjsdahhds"
 app.config["UPLOAD_FOLDER"] = "uploads"  # Directory to store uploaded files
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # Max file size: 16MB
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 16MB
 socketio = SocketIO(app)
 
 rooms = {}
