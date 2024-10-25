@@ -2,7 +2,7 @@
 ARG PORT=443
 
 # Use the Cypress browsers base image
-#FROM cypress/browsers:latest
+FROM cypress/browsers:latest
 FROM rapidfort/python-chromedriver
 
 # Install Python 3
