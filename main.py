@@ -75,6 +75,7 @@ def room():
 @app.route("/upload-file", methods=["POST"])
 def upload_file():
     if 'file' not in request.files and 'message' not in request.form:
+        print("Error: No file or message part in the request.")
         return {"error": "No file or message part"}, 400
     
     file = request.files.get('file')
@@ -82,6 +83,7 @@ def upload_file():
 
     # Check if file is present and has a filename
     if file and file.filename == '':
+        print("Error: No selected file.")
         return {"error": "No selected file"}, 400
     
     if file and allowed_file(file.filename):
@@ -89,6 +91,7 @@ def upload_file():
         
         # Check if the filename has an extension
         if '.' not in filename:
+            print("Error: File has no extension.")
             return {"error": "File has no extension"}, 400
         
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -105,6 +108,7 @@ def upload_file():
         file_url = url_for('uploaded_file', filename=filename, _external=True)
         return {"fileUrl": file_url, "fileType": file_extension, "message": message}
     
+    print("Error: Invalid file format.")
     return {"error": "Invalid file format"}, 400
 
 @app.route("/uploads/<filename>")
