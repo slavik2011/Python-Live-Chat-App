@@ -148,15 +148,20 @@ def message(data):
     room = session.get("room")
     if room not in rooms:
         return
-    type, normalized_msg = get_type(data["message"])
+    
     content = {
         "name": session.get("name"),
-        "message": normalized_msg,
-        "type": type
+        "message": data["message"],  # Send base64 string directly
+        "type": data["type"]         # 'text', 'image', or 'video'
     }
+    
+    # Emit the message to all clients in the room
     socketio.emit("message", content, room=room)
+    
+    # Save the message in the room's history
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} said: {data['message']}")
+    print(f"{session.get('name')} sent: {data['message']}")
+
 
 @socketio.on("connect")
 def connect(auth):
