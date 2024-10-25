@@ -74,19 +74,22 @@ def room():
 
 @app.route("/upload-file", methods=["POST"])
 def upload_file():
+    # Check if 'file' is part of the request
     if 'file' not in request.files:
         return {"error": "No file part"}, 400
 
     file = request.files['file']
     message = request.form.get("message", "")
-    
+
+    # Ensure the filename is not empty
     if file.filename == '':
         return {"error": "No selected file"}, 400
 
+    # Validate the file extension
     if allowed_file(file.filename):
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        file.save(filepath)  # Save the file to the specified path
 
         # Construct the URL for the uploaded file
         file_url = url_for('uploaded_file', filename=filename, _external=True)
@@ -108,9 +111,7 @@ def upload_file():
         return {"fileUrl": file_url, "fileType": file_type}, 200
 
     return {"error": "Invalid file format"}, 400
-
-
-
+    
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
