@@ -20,7 +20,6 @@
     <div class="text">
         <span><strong>${name}</strong>: `;
     
-    // Differentiate between message types
     if (type === 'text') {
       content += msg;
     } else if (type === 'image') {
@@ -41,14 +40,6 @@
   socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type);
   });
-
-  const sendMessage = () => {
-    const messageInput = document.getElementById("message");
-    const message = messageInput.value;
-    if (message === "") return;
-    socketio.emit("message", { data: message, type: 'text' });
-    messageInput.value = "";
-  };
 
   const uploadFile = () => {
     const fileInput = document.getElementById("fileInput");
@@ -81,15 +72,6 @@
       });
     }
   };
-
-  document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {
-      sendMessage();
-    }
-  });
-
-  {% for msg in messages %}
-    createMessage("{{ msg.name }}", "{{ msg.message }}", "{{ msg.type }}");
-  {% endfor %}
 </script>
+
 {% endblock %}
