@@ -1,94 +1,97 @@
 {% extends 'base.html' %} 
 {% block content %}
 <div class="message-box">
-  <h2>Chat Room: {{code}}</h2>
+  <h2>Chat Room: {{ code }}</h2>
   <div class="messages" id="messages"></div>
   <div class="inputs">
-    <input
-      type="text"
-      rows="3"
-      placeholder="Message"
-      name="message"
-      id="message"
-    />
-    <input type="file" id="file-input" accept="image/*,video/*" />
-    <button type="button" name="send" id="send-btn" onClick="sendMessage()">
-      Send
-    </button>
+    <input type="text" rows="3" placeholder="Message" name="message" id="message" />
+    <input type="file" id="fileInput" />
+    <button type="button" id="send-btn" onClick="sendOrUpload()">Send/Upload</button>
   </div>
 </div>
+
 <script type="text/javascript">
   var socketio = io();
-
   const messages = document.getElementById("messages");
 
   const createMessage = (name, msg, type) => {
-    let content = '';
+    let content = `
+    <div class="text">
+        <span><strong>${name}</strong>: `;
+    
     if (type === 'text') {
-      content = `
-      <div class="text">
-          <span>
-              <strong>${name}</strong>: ${msg}
-          </span>
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
-    } else if (type === 'image' || type === 'video') {
-      content = `
-      <div class="media">
-          <strong>${name}</strong>: <br>
-          ${type === 'image' ? `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />` : 
-          `<video controls style="max-width: 100%; height: auto;">
-              <source src="${msg}" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>`}
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
+      content += msg;
+    } else if (type === 'image') {
+      content += `<img src="${msg}" alt="Uploaded Image" style="max-width: 300px; max-height: 300px;" />`;
+    } else if (type === 'video') {
+      content += `<video controls style="max-width: 300px; max-height: 300px;">
+                    <source src="${msg}" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>`;
     }
+
+    content += `</span>
+        <span class="muted">${new Date().toLocaleString()}</span>
+    </div>`;
     messages.innerHTML += content;
   };
 
-  socketio.on("message", (data) => {
+  socketio.on("messager", (data) => {
     createMessage(data.name, data.message, data.type);
   });
 
-  const sendMessage = () => {
-    const message = document.getElementById("message");
-    const fileInput = document.getElementById("file-input");
-    
-    if (message.value === "" && fileInput.files.length === 0) return;
+  const sendOrUpload = () => {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+    const messageInput = document.getElementById("message");
+    const message = messageInput.value.trim(); // Trim whitespace
 
-    if (message.value !== "") {
-      socketio.emit("message", { data: message.value, type: 'text' });
+    // Check if the file exists
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("message", message);
+
+      fetch("/upload-file", {
+        method: "POST",
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.fileUrl) {
+          // Emit the file URL to the socket
+          socketio.emit("message", { name: '{{ session["name"] }}', message: data.fileUrl, type: data.fileType });
+        } else {
+          console.error("Upload error:", data.error);
+        }
+      })
+      .catch(error => {
+        console.error("Error uploading file:", error);
+      });
+
+      // Clear inputs after sending
+      fileInput.value = "";
+      messageInput.value = "";
+    } else if (message) {
+      // If no file, just send the message
+      socketio.emit("message", { name: '{{ session["name"] }}', message: message, type: 'text' });
+      messageInput.value = ""; // Clear the message input
+    } else {
+      console.warn("Empty message, not sending."); // Log a warning if the message is empty
     }
-
-    if (fileInput.files.length > 0) {
-      const file = fileInput.files[0];
-      const reader = new FileReader();
-      reader.onloadend = function () {
-        const type = file.type.startsWith('image/') ? 'image' : 'video';
-        socketio.emit("message", { data: reader.result, type: type });
-      }
-      reader.readAsDataURL(file);
-    }
-
-    message.value = "";
-    fileInput.value = "";  // Clear file input
   };
 
+  // Optional: Add event listener for Enter key
   document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
-      sendMessage();
+    if (e.code === "Enter") {
+      sendOrUpload();
     }
   });
-  
 </script>
+
 {% for msg in messages %}
 <script type="text/javascript">
-  createMessage("{{msg.name}}", "{{msg.message}}", "{{msg.type}}");
+  createMessage("{{ msg.name }}", "{{ msg.message }}", "{{ msg.type }}");
 </script>
 {% endfor %}
 {% endblock %}
