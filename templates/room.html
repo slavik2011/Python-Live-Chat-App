@@ -1,13 +1,12 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} 
 {% block content %}
 <div class="message-box">
   <h2>Chat Room: {{ code }}</h2>
   <div class="messages" id="messages"></div>
   <div class="inputs">
-    <input type="text" placeholder="Message" name="message" id="message" />
-    <input type="file" id="fileInput" accept="image/*,video/*" />
-    <button type="button" id="send-btn" onClick="sendMessage()">Send</button>
-    <button type="button" id="upload-btn" onClick="uploadFile()">Upload</button>
+    <input type="text" rows="3" placeholder="Message" name="message" id="message" />
+    <input type="file" id="fileInput" />
+    <button type="button" id="send-btn" onClick="sendOrUpload()">Send/Upload</button>
   </div>
 </div>
 
@@ -41,7 +40,7 @@
     createMessage(data.name, data.message, data.type);
   });
 
-  const uploadFile = () => {
+  const sendOrUpload = () => {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
     const message = document.getElementById("message").value;
@@ -59,7 +58,7 @@
       .then(data => {
         if (data.fileUrl) {
           // Emit the file URL to the socket
-          socketio.emit("message", { data: data.fileUrl, type: data.fileType });
+          socketio.emit("message", { name: '{{ session["name"] }}', message: data.fileUrl, type: data.fileType });
           // Clear the file input and message input
           fileInput.value = "";
           document.getElementById("message").value = "";
@@ -70,8 +69,23 @@
       .catch(error => {
         console.error("Error uploading file:", error);
       });
+    } else if (message) {
+      // If no file, just send the message
+      socketio.emit("message", { name: '{{ session["name"] }}', message: message, type: 'text' });
+      document.getElementById("message").value = ""; // Clear the message input
     }
   };
-</script>
 
+  // Optional: Add event listener for Enter key
+  document.getElementById("message").addEventListener("keydown", function (e) {
+    if (e.code === "Enter") {
+      sendOrUpload();
+    }
+  });
+</script>
+{% for msg in messages %}
+<script type="text/javascript">
+  createMessage("{{ msg.name }}", "{{ msg.message }}", "{{ msg.type }}");
+</script>
+{% endfor %}
 {% endblock %}
