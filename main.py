@@ -76,8 +76,8 @@ def room():
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
-@app.route("/upload-image", methods=["POST"])
-def upload_image():
+@app.route("/upload-file", methods=["POST"])
+def upload_file():
     if 'file' not in request.files:
         return {"error": "No file part"}, 400
     file = request.files['file']
@@ -88,12 +88,15 @@ def upload_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        # Optionally compress the image
-        compress_image(filepath)
+        # Optionally compress the image or video
+        if filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}:
+            compress_image(filepath)
+        elif filename.rsplit('.', 1)[1].lower() in {'mp4', 'mov'}:
+            compress_video(filepath)
 
         # Correctly generate the URL for the uploaded file
-        img_url = url_for('uploaded_file', filename=filename, _external=True)
-        return {"imgUrl": img_url}
+        file_url = url_for('uploaded_file', filename=filename, _external=True)
+        return {"fileUrl": file_url, "fileType": filename.rsplit('.', 1)[1].lower()}
 
     return {"error": "Invalid file format"}, 400
 
@@ -124,11 +127,12 @@ def message(data):
     content = {
         "name": session.get("name"),
         "message": data.get("message", ""),
-        "imgUrl": data.get("imgUrl", None)
+        "fileUrl": data.get("fileUrl", None),
+        "fileType": data.get("fileType", None)
     }
     socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} sent: {data.get('message', '')} with image: {data.get('imgUrl', '')}")
+    print(f"{session.get('name')} sent: {data.get('message', '')} with file: {data.get('fileUrl', '')}")
 
 @socketio.on("connect")
 def connect(auth):
