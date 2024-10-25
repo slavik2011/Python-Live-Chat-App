@@ -4,9 +4,9 @@
   <h2>Chat Room: {{code}}</h2>
   <div class="messages" id="messages"></div>
   <div class="inputs">
-    <input type="text" placeholder="Message" name="message" id="message" />
-    <input type="file" id="file-input" />
-    <button type="button" id="send-btn" onClick="sendMessage()">Send</button>
+    <input type="text" rows="3" placeholder="Message" name="message" id="message" />
+    <input type="file" id="file" accept="image/*,video/*" />
+    <button type="button" name="send" id="send-btn" onClick="sendMessage()">Send</button>
   </div>
 </div>
 <script type="text/javascript">
@@ -14,58 +14,71 @@
 
   const messages = document.getElementById("messages");
 
-  const createMessage = (name, msg, imgUrl = null) => {
-    let content = `
+  const createMessage = (name, msg, fileUrl, fileType) => {
+    const content = `
     <div class="text">
         <span>
-            <strong>${name}</strong>: ${msg || ''}
+            <strong>${name}</strong>: ${msg}
         </span>
         <span class="muted">
             ${new Date().toLocaleString()}
         </span>
+        ${fileUrl ? (fileType === 'mp4' || fileType === 'mov' ? 
+            `<video controls width="300"><source src="${fileUrl}" type="video/${fileType}">Your browser does not support the video tag.</video>` : 
+            `<img src="${fileUrl}" alt="Uploaded Image" style="max-width: 300px; max-height: 300px;">`) : ''}
     </div>
     `;
-    if (imgUrl) {
-      content += `<div><img src="${imgUrl}" alt="Image" style="max-width: 200px;"></div>`;
-    }
     messages.innerHTML += content;
   };
 
   socketio.on("message", (data) => {
-    createMessage(data.name, data.message, data.imgUrl);
+    createMessage(data.name, data.message, data.fileUrl, data.fileType);
   });
 
   const sendMessage = () => {
-    const message = document.getElementById("message").value;
-    const fileInput = document.getElementById("file-input");
-    const file = fileInput.files[0];
+    const message = document.getElementById("message");
+    const fileInput = document.getElementById("file");
+    
+    if (message.value === "" && !fileInput.files.length) return;
 
-    if (message == "" && !file) return;
-
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-      fetch("/upload-image", {
-        method: "POST",
-        body: formData,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          socketio.emit("message", { message, imgUrl: data.imgUrl });
-        })
-        .catch((error) => console.error("Error uploading image:", error));
-    } else {
-      socketio.emit("message", { message });
+    const formData = new FormData();
+    if (message.value) {
+      formData.append('message', message.value);
+    }
+    if (fileInput.files.length > 0) {
+      formData.append('file', fileInput.files[0]);
     }
 
-    document.getElementById("message").value = "";
+    fetch('/upload-file', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.fileUrl) {
+        socketio.emit("message", {
+          message: message.value,
+          fileUrl: data.fileUrl,
+          fileType: data.fileType
+        });
+      }
+    });
+
+    message.value = "";
     fileInput.value = "";
   };
 
-  document.getElementById("message").addEventListener("keydown", function (e) {
-    if (e.code === "Enter") {
+  var wage = document.getElementById("message");
+  wage.addEventListener("keydown", function (e) {
+    if (e.code === "Enter") {  //checks whether the pressed key is "Enter"
       sendMessage();
     }
   });
+  
 </script>
+{% for msg in messages %}
+<script type="text/javascript">
+  createMessage("{{msg.name}}", "{{msg.message}}", "{{msg.fileUrl}}", "{{msg.fileType}}");
+</script>
+{% endfor %} 
 {% endblock %}
