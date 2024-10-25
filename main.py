@@ -150,20 +150,40 @@ def message(data):
     if room not in rooms:
         return
 
-    # Get the type and normalized message from the data
-    type, normalized_msg = data["type"], data["message"]
-
-    # Construct the content dictionary
+    type, normalized_msg = get_type(data["message"])
     content = {
         "name": session.get("name"),
         "message": normalized_msg,
         "type": type
     }
+    
+    # Handle file saving if the message is a base64-encoded image or video
+    if type in ['image', 'video']:
+        # Decode the base64 message
+        import base64
 
-    # Emit the message to the room and append to the messages list
+        # Extract the data from the message
+        header, encoded = normalized_msg.split(',', 1)
+        file_data = base64.b64decode(encoded)
+        
+        # Get the file extension from the header
+        extension = header.split(';')[0].split('/')[-1]
+        filename = f"{session.get('name')}.{extension}"  # Name the file with the sender's name and extension
+
+        # Save the file
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        with open(filepath, 'wb') as f:
+            f.write(file_data)
+
+        # Construct the URL for the uploaded file
+        file_url = url_for('uploaded_file', filename=filename, _external=True)
+
+        content['message'] = file_url  # Use the URL in the message
+
     socketio.emit("message", content, room=room)
     rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} said: {data['message']}")
+    print(f"{session.get('name')} sent: {data['message']}")
+
     
 @socketio.on("message")
 def message(data):
