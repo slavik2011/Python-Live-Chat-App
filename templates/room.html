@@ -45,6 +45,7 @@
     const file = fileInput.files[0];
     const message = document.getElementById("message").value.trim(); // Trim whitespace
 
+    // Check if the file exists
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
@@ -59,9 +60,6 @@
         if (data.fileUrl) {
           // Emit the file URL to the socket
           socketio.emit("message", { name: '{{ session["name"] }}', message: data.fileUrl, type: data.fileType });
-          // Clear the file input and message input
-          fileInput.value = "";
-          document.getElementById("message").value = "";
         } else {
           console.error("Upload error:", data.error);
         }
@@ -69,6 +67,10 @@
       .catch(error => {
         console.error("Error uploading file:", error);
       });
+
+      // Clear inputs after sending
+      fileInput.value = "";
+      document.getElementById("message").value = "";
     } else if (message) {
       // If no file, just send the message
       socketio.emit("message", { name: '{{ session["name"] }}', message: message, type: 'text' });
