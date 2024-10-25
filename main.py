@@ -134,12 +134,14 @@ def compress_video(filepath):
         print(f"Error compressing video: {e}")
 
 def get_type(msg):
-    if msg.startswith('\image:'):
-        return 'image', msg[7:]
-    elif msg.startswith('\video:'):
-        return 'video', msg[7:]
+    if msg.startswith('@'):
+        return 'text', msg[1:]  # '@' indicates a text message
+    elif msg.startswith('#'):
+        return 'image', msg[1:]  # '#' indicates an image
+    elif msg.startswith('$'):
+        return 'video', msg[1:]  # '$' indicates a video
     else:
-        return 'text', msg
+        return 'unknown', msg  # Handle unexpected message types
 
 @socketio.on("message")
 def message(data):
