@@ -43,7 +43,8 @@
   const sendOrUpload = () => {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
-    const message = document.getElementById("message").value.trim(); // Trim whitespace
+    const messageInput = document.getElementById("message");
+    const message = messageInput.value.trim(); // Trim whitespace
 
     // Check if the file exists
     if (file) {
@@ -70,11 +71,13 @@
 
       // Clear inputs after sending
       fileInput.value = "";
-      document.getElementById("message").value = "";
+      messageInput.value = "";
     } else if (message) {
       // If no file, just send the message
       socketio.emit("message", { name: '{{ session["name"] }}', message: message, type: 'text' });
-      document.getElementById("message").value = ""; // Clear the message input
+      messageInput.value = ""; // Clear the message input
+    } else {
+      console.warn("Empty message, not sending."); // Log a warning if the message is empty
     }
   };
 
