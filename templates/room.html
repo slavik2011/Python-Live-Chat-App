@@ -1,52 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <style>
-.message-box {
-    width: 80%;
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-h2 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.messages {
-    height: 300px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px;
-    background-color: #f9f9f9;
-    margin-bottom: 15px;
-}
-
-.message-input {
+  .message-input {
     width: 70%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
     margin-right: 10px;
-}
+  }
 
-.file-input-container {
+  .file-input-container {
     display: flex;
     align-items: center;
-}
+  }
 
-.file-input {
+  .file-input {
     display: none; /* Hide the file input */
-}
+  }
 
-.upload-btn {
+  .upload-btn {
     padding: 10px 15px;
     background-color: #007bff; /* Blue background */
     color: white;
@@ -55,13 +27,13 @@ h2 {
     margin-right: 10px;
     cursor: pointer;
     transition: background-color 0.3s;
-}
+  }
 
-.upload-btn:hover {
+  .upload-btn:hover {
     background-color: #0056b3; /* Darker blue on hover */
-}
+  }
 
-.send-btn {
+  .send-btn {
     padding: 10px 15px;
     background-color: #28a745; /* Green background */
     color: white;
@@ -69,20 +41,20 @@ h2 {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-}
+  }
 
-.send-btn:hover {
+  .send-btn:hover {
     background-color: #218838; /* Darker green on hover */
-}
+  }
 
-.send-btn:disabled {
+  .send-btn:disabled {
     background-color: #ccc; /* Gray background for disabled state */
     cursor: not-allowed;
-}
+  }
 
-.send-btn:focus, .upload-btn:focus {
+  .send-btn:focus, .upload-btn:focus {
     outline: none; /* Remove focus outline */
-}
+  }
 </style>
 <head>
     <meta charset="UTF-8">
