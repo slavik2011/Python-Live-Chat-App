@@ -1,201 +1,121 @@
-{% extends 'base.html' %} 
-{% block content %}
-<div class="message-box">
-  <h2>Chat Room: {{code}}</h2>
-  <div class="messages" id="messages"></div>
-  <div class="inputs">
-    <input
-      type="text"
-      rows="3"
-      placeholder="Message"
-      name="message"
-      id="message"
-      class="message-input"
-    />
-    <div class="file-input-container">
-      <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
-      <button type="button" id="upload-btn" class="upload-btn">Upload File</button>
-      <button type="button" name="send" id="send-btn" onClick="sendMessage()" class="send-btn">
-        Send
-      </button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>Room: {{ code }}</h1>
+        <div id="chat-box" class="chat-box">
+            <!-- Chat messages will be appended here -->
+            {% for message in messages %}
+                <div class="message">
+                    <strong>{{ message.name }}:</strong> {{ message.message }}
+                </div>
+            {% endfor %}
+        </div>
+        <input type="text" id="messageInput" placeholder="Type your message...">
+        <input type="file" id="fileInput" accept="image/*,video/*">
+        <button id="sendBtn">Send</button>
     </div>
-  </div>
-</div>
 
-<style>
-  .message-input {
-    width: 70%;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-right: 10px;
-  }
+    <script>
+        const socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+        const chatBox = document.getElementById("chat-box");
+        const messageInput = document.getElementById("messageInput");
+        const fileInput = document.getElementById("fileInput");
+        const sendBtn = document.getElementById("sendBtn");
 
-  .file-input-container {
-    display: flex;
-    align-items: center;
-  }
+        // Scroll chat to the bottom on new messages
+        function scrollChatToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
-  .file-input {
-    display: none; /* Hide the file input */
-  }
-
-  .upload-btn {
-    padding: 10px 15px;
-    background-color: #007bff; /* Blue background */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    margin-right: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .upload-btn:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-  }
-
-  .send-btn {
-    padding: 10px 15px;
-    background-color: #28a745; /* Green background */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .send-btn:hover {
-    background-color: #218838; /* Darker green on hover */
-  }
-
-  .send-btn:disabled {
-    background-color: #ccc; /* Gray background for disabled state */
-    cursor: not-allowed;
-  }
-
-  .send-btn:focus, .upload-btn:focus {
-    outline: none; /* Remove focus outline */
-  }
-</style>
-
-<script type="text/javascript">
-  var socketio = io();
-
-  const messages = document.getElementById("messages");
-  const messageInput = document.getElementById("message");
-  const fileInput = document.getElementById("file-input");
-  const sendBtn = document.getElementById("send-btn");
-
-  const createMessage = (name, msg, type) => {
-    let content = '';
-    if (type === 'text') {
-      content = `
-      <div class="text">
-          <span>
-              <strong>${name}</strong>: ${msg}
-          </span>
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
-    } else if (type === 'image') {
-      content = `
-      <div class="media">
-          <strong>${name}</strong>: <br>
-          <img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
-    } else if (type === 'video') {
-      content = `
-      <div class="media">
-          <strong>${name}</strong>: <br>
-          <video controls style="max-width: 100%; height: auto;">
-              <source src="${msg}" type="video/mp4">
-              Your browser does not support the video tag.
-          </video>
-          <span class="muted">
-              ${new Date().toLocaleString()}
-          </span>
-      </div>`;
-    }
-    messages.innerHTML += content;
-  };
-
-  socketio.on("message", (data) => {
-    createMessage(data.name, data.message, data.type);
-  });
-
-  const sendMessage = () => {
-    const message = messageInput.value;
-
-    if (message === "" && fileInput.files.length === 0) return;
-
-    // Handle text messages
-    if (message !== "") {
-      socketio.emit("message", { message: message, type: 'text' });
-    }
-
-    // Handle file messages (image or video)
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        fetch("/upload-file", {
-            method: "POST",
-            body: formData
-        }).then(response => response.json())
-        .then(data => {
-            if (data.fileUrl && data.fileType === 'video') {
-                socketio.emit("message", { message: 'sending video...', type: 'text' })
-                socketio.emit("message", { message: data.fileUrl, type: 'video' });
-            } else if (data.fileUrl && data.fileType === 'image') {
-                socketio.emit("message", { message: 'sending image...', type: 'text' })
-                socketio.emit("message", { message: data.fileUrl, type: 'image' });
+        // Disable text input when a file is selected
+        fileInput.addEventListener("change", function() {
+            if (fileInput.files[0].size > 64 * 1024 * 1024) {  // File size check for 64MB
+                alert("File size exceeds the 64MB limit.");
+                fileInput.value = "";  // Clear file input
+                messageInput.disabled = false;
+            } else {
+                messageInput.disabled = true;  // Disable text input
+                sendBtn.innerText = 'File Selected';
             }
-        }).catch(error => {
-            console.error("Error uploading file:", error);
         });
-    }
 
-    messageInput.value = "";
-    fileInput.value = "";  // Clear file input
-    messageInput.disabled = false; // Enable the text input
-    sendBtn.innerText = 'Send'; // Reset button text
-  };
+        // Re-enable text input when message input is focused and file is removed
+        messageInput.addEventListener("focus", function() {
+            if (!fileInput.value) {
+                messageInput.disabled = false;
+                sendBtn.innerText = 'Send';
+            }
+        });
 
-  document.getElementById("upload-btn").addEventListener("click", function() {
-    fileInput.click(); // Trigger the hidden file input
-  });
+        // Sending messages or files
+        sendBtn.addEventListener("click", function() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append("file", file);
 
-  fileInput.addEventListener("change", function() {
-    if (fileInput.files.length > 0) {
-      messageInput.disabled = true; // Disable the text input when a file is uploaded
-      sendBtn.innerText = 'File Selected'; // Change button text to "File Selected"
-    }
-  });
+                fetch("/upload-file", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        socket.emit("message", {
+                            message: data.fileUrl,
+                            type: data.fileType  // 'image' or 'video'
+                        });
+                    }
+                    fileInput.value = "";
+                    messageInput.disabled = false;
+                    sendBtn.innerText = 'Send';
+                })
+                .catch(error => console.error("Error uploading file:", error));
+            } else if (messageInput.value.trim() !== "") {
+                socket.emit("message", {
+                    message: messageInput.value,
+                    type: 'text'
+                });
+                messageInput.value = "";  // Clear the input
+            }
+        });
 
-  messageInput.addEventListener("keydown", function (e) {
-    if (e.code === "Enter" && !messageInput.disabled) {
-      sendMessage();
-    }
-  });
+        // Receiving messages
+        socket.on("message", function(data) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message");
 
-  // Allow enabling the text input again after sending the file
-  socketio.on("fileSent", () => {
-    messageInput.disabled = false; // Enable the text input after file is sent
-    sendBtn.innerText = 'Send'; // Reset button text
-  });
+            if (data.type === 'text') {
+                messageElement.innerHTML = `<strong>${data.name}:</strong> ${data.message}`;
+            } else if (data.type === 'image') {
+                messageElement.innerHTML = `<strong>${data.name}:</strong> <img src="${data.message}" alt="Image" style="max-width: 200px;">`;
+            } else if (data.type === 'video') {
+                messageElement.innerHTML = `<strong>${data.name}:</strong> <video src="${data.message}" controls style="max-width: 200px;"></video>`;
+            }
 
-</script>
+            chatBox.appendChild(messageElement);
+            scrollChatToBottom();
+        });
 
-{% for msg in messages %}
-<script type="text/javascript">
-  createMessage("{{msg.name}}", "{{msg.message}}", "{{msg.type}}");
-</script>
-{% endfor %}
-{% endblock %}
+        // Join room on connect
+        socket.on("connect", function() {
+            console.log("Connected to the room");
+        });
+
+        // Alert when disconnected
+        socket.on("disconnect", function() {
+            console.log("Disconnected from the server");
+        });
+    </script>
+</body>
+</html>
