@@ -1,5 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 600px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-box {
+    flex: 1;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.message strong {
+    color: #007bff;
+}
+
+.message img,
+.message video {
+    max-width: 100%;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+.messageInput-container,
+.fileInput-container {
+    display: flex;
+    gap: 10px;
+}
+
+#messageInput,
+#fileInput,
+#sendBtn {
+    font-size: 16px;
+}
+
+#messageInput {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    flex: 1;
+}
+
+#sendBtn {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#sendBtn:hover {
+    background-color: #218838;
+}
+
+#sendBtn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#sendBtn:focus,
+#messageInput:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+</style>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
