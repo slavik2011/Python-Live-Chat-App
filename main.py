@@ -7,14 +7,16 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 from moviepy.editor import VideoFileClip
 import sys
+import time
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "hjhjsdahhds"
 app.config["UPLOAD_FOLDER"] = "uploads"  # Directory to store uploaded files
-app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 16MB
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 64MB
 socketio = SocketIO(app)
 
 rooms = {}
+room_last_activity = {}
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -51,6 +53,7 @@ def home():
         if create != False:
             room = generate_unique_code(6)
             rooms[room] = {"members": 0, "messages": []}
+            room_last_activity[room] = time.time()  # Track creation time for activity
         elif code not in rooms:
             return render_template("home.html", error="Room does not exist.", code=code, name=name)
 
@@ -121,16 +124,6 @@ def compress_video(filepath):
     except Exception as e:
         print(f"Error compressing video: {e}")
 
-def get_type(msg):
-    if msg.startswith('@'):
-        return 'text', msg[1:]  # '@' indicates a text message
-    elif msg.startswith('#'):
-        return 'image', msg[1:]  # '#' indicates an image
-    elif msg.startswith('$'):
-        return 'video', msg[1:]  # '$' indicates a video
-    else:
-        return 'unknown', msg  # Handle unexpected message types
-
 @socketio.on("message")
 def message(data):
     room = session.get("room")
@@ -148,8 +141,8 @@ def message(data):
     
     # Save the message in the room's history
     rooms[room]["messages"].append(content)
+    room_last_activity[room] = time.time()  # Update last activity time
     print(f"{session.get('name')} sent: {data['message']}")
-
 
 @socketio.on("connect")
 def connect(auth):
@@ -162,7 +155,33 @@ def connect(auth):
         return
     
     join_room(room)
+    rooms[room]["members"] += 1
+    room_last_activity[room] = time.time()  # Track last activity
     socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
 
+@socketio.on("disconnect")
+def disconnect():
+    room = session.get("room")
+    if room in rooms:
+        rooms[room]["members"] -= 1
+        if rooms[room]["members"] == 0:
+            room_last_activity[room] = time.time()  # Track time when last user left
+
+@socketio.on("remove_inactive_rooms")
+def remove_inactive_rooms():
+    current_time = time.time()
+    for room, last_activity in list(room_last_activity.items()):
+        if room != 'MAIN' and rooms[room]["members"] == 0 and (current_time - last_activity) > 300:
+            del rooms[room]
+            del room_last_activity[room]
+            print(f"Room {room} has been removed due to inactivity.")
+
+@socketio.on("start_room_cleanup_task")
+def start_room_cleanup_task():
+    while True:
+        remove_inactive_rooms()
+        socketio.sleep(300)
+
 if __name__ == "__main__":
+    socketio.start_background_task(start_room_cleanup_task)
     socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
