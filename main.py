@@ -107,7 +107,7 @@ def compress_image(filepath):
     """ Compress image to save space. """
     try:
         img = Image.open(filepath)
-        img.save(filepath, optimize=True, quality=40)  # Compress with quality 40%
+        img.save(filepath, optimize=True, quality=20)  # Compress with quality 40%
     except Exception as e:
         print(f"Error compressing image: {e}")
 
@@ -116,7 +116,7 @@ def compress_video(filepath):
     try:
         clip = VideoFileClip(filepath)
         compressed_path = filepath.rsplit('.', 1)[0] + "_compressed.mp4"
-        clip.write_videofile(compressed_path, bitrate="250k")  # Reduce video bitrate
+        clip.write_videofile(compressed_path, bitrate="60k")  # Reduce video bitrate
         os.replace(compressed_path, filepath)  # Replace original with compressed version
     except Exception as e:
         print(f"Error compressing video: {e}")
