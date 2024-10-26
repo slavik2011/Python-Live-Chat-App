@@ -1,60 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <style>
-  .message-input {
-    width: 70%;
+.message-box {
+    width: 80%;
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.messages {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+}
+
+.inputs {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.message-input {
+    flex-grow: 1;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
     margin-right: 10px;
-  }
+    font-size: 14px;
+}
 
-  .file-input-container {
+.file-input-container {
     display: flex;
     align-items: center;
-  }
+    gap: 10px;
+}
 
-  .file-input {
+.file-input {
     display: none; /* Hide the file input */
-  }
+}
 
-  .upload-btn {
+.upload-btn {
     padding: 10px 15px;
-    background-color: #007bff; /* Blue background */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    margin-right: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .upload-btn:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-  }
-
-  .send-btn {
-    padding: 10px 15px;
-    background-color: #28a745; /* Green background */
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-  }
+}
 
-  .send-btn:hover {
-    background-color: #218838; /* Darker green on hover */
-  }
+.upload-btn:hover {
+    background-color: #0056b3;
+}
 
-  .send-btn:disabled {
-    background-color: #ccc; /* Gray background for disabled state */
+.send-btn {
+    padding: 10px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.send-btn:hover {
+    background-color: #218838;
+}
+
+.send-btn:disabled {
+    background-color: #ccc;
     cursor: not-allowed;
-  }
+}
 
-  .send-btn:focus, .upload-btn:focus {
-    outline: none; /* Remove focus outline */
-  }
+.send-btn:focus, .upload-btn:focus {
+    outline: none;
+}
+
 </style>
 <head>
     <meta charset="UTF-8">
