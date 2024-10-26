@@ -1,100 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <style>
-    body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    color: #333;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-}
-
-.chat-container {
-    width: 100%;
+.message-box {
+    width: 80%;
     max-width: 600px;
+    margin: 0 auto;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     display: flex;
     flex-direction: column;
 }
 
-.chat-box {
-    flex: 1;
+h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.messages {
+    height: 300px;
+    overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 10px;
-    margin-bottom: 10px;
-    overflow-y: auto;
-    max-height: 400px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
 }
 
-.message {
-    margin-bottom: 10px;
-    padding: 8px;
-    border-radius: 5px;
-}
-
-.message strong {
-    color: #007bff;
-}
-
-.message img,
-.message video {
-    max-width: 100%;
-    border-radius: 5px;
-    margin-top: 5px;
-}
-
-.messageInput-container,
-.fileInput-container {
-    display: flex;
-    gap: 10px;
-}
-
-#messageInput,
-#fileInput,
-#sendBtn {
-    font-size: 16px;
-}
-
-#messageInput {
-    width: 100%;
+.message-input {
+    width: 70%;
     padding: 10px;
-    border: 1px solid #ddd;
     border-radius: 5px;
-    flex: 1;
+    border: 1px solid #ccc;
+    margin-right: 10px;
 }
 
-#sendBtn {
+.file-input-container {
+    display: flex;
+    align-items: center;
+}
+
+.file-input {
+    display: none; /* Hide the file input */
+}
+
+.upload-btn {
     padding: 10px 15px;
-    background-color: #28a745;
-    color: #fff;
+    background-color: #007bff; /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.upload-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.send-btn {
+    padding: 10px 15px;
+    background-color: #28a745; /* Green background */
+    color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
-#sendBtn:hover {
-    background-color: #218838;
+.send-btn:hover {
+    background-color: #218838; /* Darker green on hover */
 }
 
-#sendBtn:disabled {
-    background-color: #ccc;
+.send-btn:disabled {
+    background-color: #ccc; /* Gray background for disabled state */
     cursor: not-allowed;
 }
 
-#sendBtn:focus,
-#messageInput:focus {
-    outline: none;
-    border-color: #007bff;
+.send-btn:focus, .upload-btn:focus {
+    outline: none; /* Remove focus outline */
 }
-
 </style>
 <head>
     <meta charset="UTF-8">
