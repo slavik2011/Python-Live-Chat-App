@@ -10,13 +10,14 @@ import sys
 import time
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "hjhjsdahhds"
+app.config["SECRET_KEY"] = "slvrealsecretkeylausdcongratuations"
 app.config["UPLOAD_FOLDER"] = "uploads"  # Directory to store uploaded files
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 64MB
 socketio = SocketIO(app)
 
 rooms = {}
 room_last_activity = {}
+colored_text_codes = {'<1111>': '#4465fc', '<201124>': '#fc4744'}
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -33,6 +34,10 @@ def generate_unique_code(length):
         if code not in rooms:
             break
     return code
+
+def generate_unique_filename(filename):
+    filename, extension = os.path.splitext(filename)
+    return secure_filename(filename + '-' + str(random.randint(1, 10000)) + extension)
 
 @app.route("/", methods=["POST", "GET"])
 def home():
@@ -86,7 +91,7 @@ def upload_file():
         return {"error": "No selected file"}, 400
 
     if allowed_file(file.filename):
-        filename = secure_filename(file.filename)
+        filename = generate_unique_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
@@ -102,7 +107,7 @@ def upload_file():
 
     return {"error": "Invalid file format"}, 400
 
-@app.route("/uploads/<filename>")
+@app.route("/uploads/")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
@@ -124,16 +129,22 @@ def compress_video(filepath):
     except Exception as e:
         print(f"Error compressing video: {e}")
 
+def get_username_color(username):
+    for i
+
 @socketio.on("message")
 def message(data):
     room = session.get("room")
     if room not in rooms:
         return
+
+    
     
     content = {
         "name": session.get("name"),
         "message": data["message"],  # Send base64 string directly
-        "type": data["type"]         # 'text', 'image', or 'video'
+        "type": data["type"],         # 'text', 'image', or 'video'
+        "color": color  # Include the color in the message data
     }
     
     # Emit the message to all clients in the room
@@ -172,6 +183,11 @@ def remove_inactive_rooms():
     current_time = time.time()
     for room, last_activity in list(room_last_activity.items()):
         if room != 'MAIN' and rooms[room]["members"] == 0 and (current_time - last_activity) > 300:
+            # Delete all media files in the room's upload folder
+            room_folder = os.path.join(app.config["UPLOAD_FOLDER"], room)
+            if os.path.exists(room_folder):
+                for filename in os.listdir(room_folder):
+                    os.remove(os.path.join(room_folder, filename))
             del rooms[room]
             del room_last_activity[room]
             print(f"Room {room} has been removed due to inactivity.")
