@@ -186,7 +186,7 @@ messageInput.addEventListener("keydown", function(e) {
   };
 
   messageInput.addEventListener("keydown", function (e) {
-    if (e.code === "Enter" && !messageInput.disabled) {
+    if (!e.shiftKey && e.code === "Enter" && !messageInput.disabled) {
       sendMessage();
     }
   });
