@@ -9,7 +9,7 @@ from moviepy.editor import VideoFileClip
 import sys
 import time
 
-#sys.argv[1] = 5000
+#sys.argv[1] = 5000 2
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "slvrealsecretkeylausdcongratuations"
