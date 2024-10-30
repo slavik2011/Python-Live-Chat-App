@@ -135,8 +135,7 @@ def get_username_color(username):
     print(username)
     for element in colored_text_codes.keys():
         if username.startswith(element):
-            print(element, len(colored_text_codes[element]))
-            return colored_text_codes[element], username[len(colored_text_codes[element]):]
+            return colored_text_codes[element], username[len(element):]
     return '#000000', username
 
 @socketio.on("message")
