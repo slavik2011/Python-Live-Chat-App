@@ -165,17 +165,18 @@ def message(data):
 def connect(auth):
     room = session.get("room")
     name = session.get("name")
+    rooms[room]["members"] += 1
     if not room or not name:
         return
     if room not in rooms:
         leave_room(room)
         return
-    if name in rooms[room]["names"]:
+    if name in rooms[room]["names"] and not rooms[room]["members"] == 1:
+        rooms[room]["members"] -= 1
         leave_room(room)
         return
     
     join_room(room)
-    rooms[room]["members"] += 1
     rooms[room]["names"].append(name)
     room_last_activity[room] = time.time()  # Track last activity
     socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
