@@ -174,10 +174,10 @@ def connect(auth):
     if room not in rooms:
         leave_room(room)
         return
-    if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
-        rooms[room]["members"] -= 1
-        leave_room(room)
-        return
+    #if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
+    #    rooms[room]["members"] -= 1
+    #    leave_room(room)
+    #    return
     
     join_room(room)
     rooms[room]["names"].append(name)
