@@ -9,10 +9,10 @@ from moviepy.editor import VideoFileClip
 import sys
 import time
 
-#sys.argv[1] = 5000 2
+#sys.argv[1] = 5000
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "slvrealsecretkeylausdcongratuations"
+app.config["SECRET_KEY"] = "slvrealsecretkeylausdcongratuations221"
 app.config["UPLOAD_FOLDER"] = "uploads"  # Directory to store uploaded files
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 64MB
 socketio = SocketIO(app)
