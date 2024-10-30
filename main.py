@@ -19,7 +19,7 @@ socketio = SocketIO(app)
 
 rooms = {}
 room_last_activity = {}
-colored_text_codes = {'<1111>': '#4465fc', '<201124>': 'rainbow'}
+colored_text_codes = {'<1111>': '#4465fc', '<201124>': 'rainbow', '<228>': '#de1d1d'}
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -59,7 +59,7 @@ def home():
         room = code
         if create != False:
             room = generate_unique_code(6)
-            rooms[room] = {"members": 0, "messages": []}
+            rooms[room] = {"members": 0, "names": [],"messages": []}
             room_last_activity[room] = time.time()  # Track creation time for activity
         elif code not in rooms:
             return render_template("home.html", error="Room does not exist.", code=code, name=name)
@@ -171,9 +171,13 @@ def connect(auth):
     if room not in rooms:
         leave_room(room)
         return
+    if name in rooms[room]["names"]:
+        leave_room(room)
+        return
     
     join_room(room)
     rooms[room]["members"] += 1
+    rooms[room]["names"].append(name)
     room_last_activity[room] = time.time()  # Track last activity
     socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
 
