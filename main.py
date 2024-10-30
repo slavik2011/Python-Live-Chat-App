@@ -134,9 +134,9 @@ def compress_video(filepath):
 def get_username_color(username):
     print(username)
     for element in colored_text_codes.keys():
-        print(element)
         if username.startswith(element):
-            return colored_text_codes[element], username[len(colored_text_codes[element]) + 1:]
+            print(element, len(colored_text_codes[element]))
+            return colored_text_codes[element], username[len(colored_text_codes[element]):]
     return '#000000', username
 
 @socketio.on("message")
