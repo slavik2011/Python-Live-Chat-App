@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
 </head>
 <body>
 <div class="message-box">
@@ -138,6 +139,14 @@
     }
     messages.innerHTML += content;
   };
+
+// Add event listener for Shift+Enter in the textarea
+messageInput.addEventListener("keydown", function(e) {
+  if (e.shiftKey && e.code === "Enter" && !messageInput.disabled) {
+    e.preventDefault();
+    this.value += "\n";
+  }
+});
 
   // Function to send a message to the server
   const sendMessage = () => {
