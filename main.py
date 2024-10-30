@@ -17,7 +17,7 @@ socketio = SocketIO(app)
 
 rooms = {}
 room_last_activity = {}
-colored_text_codes = {'<1111>': '#4465fc', '<201124>': '#fc4744'}
+colored_text_codes = {'<1111>': '#4465fc', '<201124>': 'rainbow'}
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -107,7 +107,7 @@ def upload_file():
 
     return {"error": "Invalid file format"}, 400
 
-@app.route("/uploads/")
+@app.route("/uploads/<string:filename>")
 def uploaded_file(filename):
     return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
@@ -124,13 +124,18 @@ def compress_video(filepath):
     try:
         clip = VideoFileClip(filepath)
         compressed_path = filepath.rsplit('.', 1)[0] + "_compressed.mp4"
-        clip.write_videofile(compressed_path, bitrate="60k")  # Reduce video bitrate
+        clip.write_videofile(compressed_path, bitrate="40k")  # Reduce video bitrate
         os.replace(compressed_path, filepath)  # Replace original with compressed version
     except Exception as e:
         print(f"Error compressing video: {e}")
 
 def get_username_color(username):
-    for i
+    print(username)
+    for element in colored_text_codes.keys():
+        print(element)
+        if username.startswith(element):
+            return colored_text_codes[element], username[len(colored_text_codes[element]) + 1:]
+    return '#000000', username
 
 @socketio.on("message")
 def message(data):
@@ -138,10 +143,10 @@ def message(data):
     if room not in rooms:
         return
 
-    
+    color, username = get_username_color(session.get("name"))
     
     content = {
-        "name": session.get("name"),
+        "name": username,
         "message": data["message"],  # Send base64 string directly
         "type": data["type"],         # 'text', 'image', or 'video'
         "color": color  # Include the color in the message data
@@ -200,4 +205,4 @@ def start_room_cleanup_task():
 
 if __name__ == "__main__":
     socketio.start_background_task(start_room_cleanup_task)
-    socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
+    socketio.run(app, debug=True, host='0.0.0.0')#port=int(sys.argv[1]))
