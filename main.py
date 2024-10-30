@@ -59,7 +59,7 @@ def home():
         room = code
         if create != False:
             room = generate_unique_code(6)
-            rooms[room] = {"members": 0, "names": [],"messages": []}
+            rooms[room] = {"members": 0, "names": [], "messages": []}
             room_last_activity[room] = time.time()  # Track creation time for activity
         elif code not in rooms:
             return render_template("home.html", error="Room does not exist.", code=code, name=name)
@@ -72,7 +72,7 @@ def home():
 
 # Creating main room
 room = 'MAIN'
-rooms[room] = {"members": 0, "messages": []}
+rooms[room] = {"members": 0, "messages": [], "names": []}
 
 @app.route("/room")
 def room():
