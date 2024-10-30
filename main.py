@@ -171,7 +171,7 @@ def connect(auth):
     if room not in rooms:
         leave_room(room)
         return
-    if name in rooms[room]["names"] and not rooms[room]["members"] == 1:
+    if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
         rooms[room]["members"] -= 1
         leave_room(room)
         return
