@@ -165,7 +165,10 @@ def message(data):
 def connect(auth):
     room = session.get("room")
     name = session.get("name")
-    rooms[room]["members"] += 1
+    try:
+        rooms[room]["members"] += 1
+    except:
+        rooms[room]["members"] = 1
     if not room or not name:
         return
     if room not in rooms:
