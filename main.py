@@ -178,6 +178,13 @@ def connect(auth):
     #    rooms[room]["members"] -= 1
     #    leave_room(room)
     #    return
+
+    h_room = str(random.randint(1, 10000000))
+
+    join_room(h_room)
+
+    for msg in rooms[room]['messages']:
+        socketio.emit("message", msg, room=h_room)
     
     join_room(room)
     rooms[room]["names"].append(name)
