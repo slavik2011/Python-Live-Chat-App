@@ -9,6 +9,8 @@ from moviepy.editor import VideoFileClip
 import sys
 import time
 
+#sys.argv[1] = 5000
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "slvrealsecretkeylausdcongratuations"
 app.config["UPLOAD_FOLDER"] = "uploads"  # Directory to store uploaded files
@@ -205,4 +207,4 @@ def start_room_cleanup_task():
 
 if __name__ == "__main__":
     socketio.start_background_task(start_room_cleanup_task)
-    socketio.run(app, debug=True, host='0.0.0.0')#port=int(sys.argv[1]))
+    socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
