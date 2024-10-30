@@ -148,6 +148,9 @@ messageInput.addEventListener("keydown", function(e) {
     e.preventDefault();
     this.value += "\n";
   }
+if (e.code === "Enter" && !messageInput.disabled) {
+    e.preventDefault();
+  }
 });
 
   // Function to send a message to the server
