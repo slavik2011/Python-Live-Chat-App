@@ -19,7 +19,7 @@ socketio = SocketIO(app)
 
 rooms = {}
 room_last_activity = {}
-colored_text_codes = {'<1111>': '#4465fc', '<201124>': 'rainbow', '<228>': '#de1d1d'}
+colored_text_codes = {'<1111>': '#4465fc', '<201124>': 'rainbow', '<228>': '#de1d1d', '<security333>': '#e455e2'}
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -152,8 +152,20 @@ def message(data):
         "type": data["type"],         # 'text', 'image', or 'video'
         "color": color  # Include the color in the message data
     }
+    
     if '<' in data["message"] and '>' in data["message"]:
-        socketio.emit("message", 'Security Warning: Attempted code execution!', room=room)
+        content['message'] = 'Security Warning: Attempted code execution!'
+        content['name'] = 'Security'
+        socketio.emit("message", content, room=room)
+        rooms[room]["messages"].append(content)
+        room_last_activity[room] = time.time()  # Update last activity time
+        return 
+    if '<' in data["name"] and '>' in data["name"] and color == '#000000':
+        content['message'] = 'Security Warning: Attempted code execution!'
+        content['name'] = 'Security'
+        socketio.emit("message", content, room=room)
+        rooms[room]["messages"].append(content)
+        room_last_activity[room] = time.time()  # Update last activity time
         return 
     
     # Emit the message to all clients in the room
