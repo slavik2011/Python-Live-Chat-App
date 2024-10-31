@@ -78,13 +78,16 @@
     let content = '';
 
     if (type === 'text') {
-      content = `<div class="text"><strong class="${nameStyle}" ${nameColor}>${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>`;
-    } else if (type === 'image' || type === 'audio') {
-      content = `<div class="media"><strong class="${nameStyle}" ${nameColor}>${name}</strong>: <br>`;
-      if (type === 'image') content += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
-      else content += `<audio controls src="${msg}"></audio>`;
-      content += `<span class="muted">${new Date().toLocaleString()}</span></div>`;
+      content = <div class="text"><strong class="${nameStyle}">${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>;
+    } else if (type === 'image' || type === 'audio' || type === 'video') {
+      content = <div class="media"><strong class="${nameStyle}">${name}</strong>: <br>;
+      if (type === 'image') content += <img style="max-width: 100%; height: auto;" alt="Image" src="${msg}">;
+      else if (type === 'audio') content += <audio src="${msg}" controls=""></audio>;
+      else content += <video src="${msg}" controls=""></video>;
+      content += <span class="muted">${new Date().toLocaleString()}</span></div>;
     }
+
+
     messages.innerHTML += content;
     messages.scrollTop = messages.scrollHeight; // Auto scroll to bottom
   };
