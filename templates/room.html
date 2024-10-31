@@ -114,7 +114,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.fileUrl) {
-                    const type = data.fileType === 'audio' ? 'audio' : data.fileType === 'video' ? 'video' : 'image';
+                    const type = data.fileType
                     socketio.emit("message", { message: data.fileUrl, type: type, color: 'rainbow' });
                     console.log("File sent as message"); // Debugging line
                 }
