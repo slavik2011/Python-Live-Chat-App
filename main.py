@@ -114,8 +114,10 @@ def upload_file():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         print(f"Saving file to {file_path}")  # Debugging statement
         file.save(file_path)
-
+        
         file_type = 'audio' if filename.endswith('.wav') else 'image'
+        if filename.endswith('.mp4'):
+            file_type = 'video'
         file_url = f"/uploads/{filename}"
 
         return jsonify({'fileUrl': file_url, 'fileType': file_type})
