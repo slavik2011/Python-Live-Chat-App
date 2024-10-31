@@ -152,6 +152,9 @@ def message(data):
         "type": data["type"],         # 'text', 'image', or 'video'
         "color": color  # Include the color in the message data
     }
+    if '<' in data["message"] and '>' in data["message"]:
+        socketio.emit("message", 'Security Warning: Attempted code execution!', room=room)
+        return 
     
     # Emit the message to all clients in the room
     socketio.emit("message", content, room=room)
