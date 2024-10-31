@@ -71,26 +71,27 @@
   let mediaRecorder;
   let isRecording = false;
 
-  const createMessage = (name, msg, type, color = '#000000') => {
+  const createMessage = (name, msg, type, color = '#000000') =&gt; {
     const messages = document.getElementById("messages");
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
     const nameColor = color !== 'rainbow' ? `style="color: ${color};"` : '';
     let content = '';
 
     if (type === 'text') {
-      content = <div class="text"><strong class="${nameStyle}">${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>;
+      content = `<div class="text"><strong class="${nameStyle}">${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>`;
     } else if (type === 'image' || type === 'audio' || type === 'video') {
-      content = <div class="media"><strong class="${nameStyle}">${name}</strong>: <br>;
-      if (type === 'image') content += <img style="max-width: 100%; height: auto;" alt="Image" src="${msg}">;
-      else if (type === 'audio') content += <audio src="${msg}" controls=""></audio>;
-      else content += <video src="${msg}" controls=""></video>;
-      content += <span class="muted">${new Date().toLocaleString()}</span></div>;
+      content = `<div class="media"><strong class="${nameStyle}">${name}</strong>: <br>`;
+      if (type === 'image') content += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;">`;
+      else if (type === 'audio') content += `<audio controls="" src="${msg}"></audio>`;
+      else content += `<video controls="" src="${msg}"></video>`;
+      content += `<span class="muted">${new Date().toLocaleString()}</span></div>`;
     }
 
 
     messages.innerHTML += content;
     messages.scrollTop = messages.scrollHeight; // Auto scroll to bottom
   };
+
 
   const sendMessage = () => {
     const fileInput = document.getElementById("file-input");
