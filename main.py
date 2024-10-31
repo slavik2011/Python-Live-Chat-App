@@ -1,45 +1,62 @@
-from flask import Flask, render_template, request, session, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, session, redirect, url_for, send_from_directory, send_file, jsonify
 from flask_socketio import join_room, leave_room, emit, SocketIO
 import random
 import os
 from string import ascii_uppercase
 from werkzeug.utils import secure_filename
-from PIL import Image
-from moviepy.editor import VideoFileClip
-import sys
+import mimetypes  # Crucial for detecting file types
 import time
-
-#sys.argv[1] = 5000
+import base64
+import uuid
+import json
+import sys
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "slvrealsecretkeylausdcongratuations221"
-app.config["UPLOAD_FOLDER"] = "uploads"  # Directory to store uploaded files
+app.config["SECRET_KEY"] = "your_secret_key"  # Replace with a strong secret key
+app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 64MB
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 socketio = SocketIO(app)
 
 rooms = {}
 room_last_activity = {}
-colored_text_codes = {'<1111>': '#4465fc', '<201124>': 'rainbow', '<228>': '#de1d1d', '<security333>': '#e455e2'}
+colored_text_codes = {
+    "<1111>": "#4465fc",
+    "<201124>": "rainbow",
+    "<228>": "#de1d1d",
+    "<security333>": "#e455e2",
+}
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
     os.makedirs(app.config["UPLOAD_FOLDER"])
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov'}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "wav", "mp3"}
+
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def generate_unique_code(length):
     while True:
-        code = ''.join(random.choice(ascii_uppercase) for _ in range(length))
+        code = "".join(random.choice(ascii_uppercase) for _ in range(length))
         if code not in rooms:
             break
     return code
 
+
 def generate_unique_filename(filename):
     filename, extension = os.path.splitext(filename)
-    return secure_filename(filename + '-' + str(random.randint(1, 10000)) + extension)
+    return secure_filename(filename + "-" + str(random.randint(1, 10000)) + extension)
+
+
+def get_username_color(username):
+    for element, color in colored_text_codes.items():
+        if username.startswith(element):
+            return color, username[len(element):]
+    return "#000000", username
 
 @app.route("/", methods=["POST", "GET"])
 def home():
@@ -74,44 +91,40 @@ def home():
 room = 'MAIN'
 rooms[room] = {"members": 0, "messages": [], "names": []}
 
+
 @app.route("/room")
 def room():
     room = session.get("room")
     if room is None or session.get("name") is None or room not in rooms:
         return redirect(url_for("home"))
 
-    return render_template("room.html", code=room, messages=rooms[room]["messages"])
+    return render_template("room.html", code=room, messages=rooms.get(room, []))
 
-@app.route("/upload-file", methods=["POST"])
+@app.route('/upload-file', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return {"error": "No file part"}, 400
+        return jsonify({"error": "No file part"}), 400
 
     file = request.files['file']
-    
     if file.filename == '':
-        return {"error": "No selected file"}, 400
+        return jsonify({"error": "No selected file"}), 400
 
-    if allowed_file(file.filename):
-        filename = generate_unique_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+    if file and allowed_file(file.filename):
+        filename = f"{uuid.uuid4()}_{file.filename}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        print(f"Saving file to {file_path}")  # Debugging statement
+        file.save(file_path)
 
-        # Construct the URL for the uploaded file
-        file_url = url_for('uploaded_file', filename=filename, _external=True)
+        file_type = 'audio' if filename.endswith('.wav') else 'image'
+        file_url = f"/uploads/{filename}"
 
-        # Determine file type
-        file_type = 'image' if file.content_type.startswith('image/') else 'video'
+        return jsonify({'fileUrl': file_url, 'fileType': file_type})
 
-        compress_image(filepath) if file_type == 'image' else compress_video(filepath)
+    return jsonify({"error": "Invalid file type"}), 400
 
-        return {"fileUrl": file_url, "fileType": file_type}, 200
-
-    return {"error": "Invalid file format"}, 400
-
-@app.route("/uploads/<string:filename>")
+@app.route('/uploads/<filename>')
 def uploaded_file(filename):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 def compress_image(filepath):
     """ Compress image to save space. """
@@ -141,58 +154,51 @@ def get_username_color(username):
 @socketio.on("message")
 def message(data):
     room = session.get("room")
+    if room is None:
+        return
+
     if room not in rooms:
         return
 
     color, username = get_username_color(session.get("name"))
-    
     content = {
         "name": username,
-        "message": data["message"],  # Send base64 string directly
-        "type": data["type"],         # 'text', 'image', or 'video'
-        "color": color  # Include the color in the message data
+        "message": data.get("message", ""),
+        "type": data.get("type", "text"),
+        "color": color,
     }
-    
-    if '<' in data["message"] and '>' in data["message"]:
-        content['message'] = 'Security Warning: Attempted code execution!'
-        content['name'] = 'Security'
-        socketio.emit("message", content, room=room)
-        rooms[room]["messages"].append(content)
-        room_last_activity[room] = time.time()  # Update last activity time
-        return 
-    if '<' in data["name"] and '>' in data["name"] and color == '#000000':
-        content['message'] = 'Security Warning: Attempted code execution!'
-        content['name'] = 'Security'
-        socketio.emit("message", content, room=room)
-        rooms[room]["messages"].append(content)
-        room_last_activity[room] = time.time()  # Update last activity time
-        return 
-    
-    # Emit the message to all clients in the room
-    socketio.emit("message", content, room=room)
-    
-    # Save the message in the room's history
+
+    # Check if the message is of type 'audio'
+    if content["type"] == "audio":
+        # The message should contain the audio file URL
+        content["message"] = data.get("message")  # This should be the URL sent from the client
+
+    # Store the message in the room's message history
     rooms[room]["messages"].append(content)
-    room_last_activity[room] = time.time()  # Update last activity time
-    print(f"{session.get('name')} sent: {data['message']}")
+
+    # Other security checks...
+    if "<" in content["message"] and ">" in content["message"]:
+        content["message"] = "Security Warning: Attempted code execution!"
+        content["name"] = "Security"
+
+    # Emit the message to all users in the room
+    socketio.emit("message", content, room=room)
+
 
 @socketio.on("connect")
 def connect(auth):
     room = session.get("room")
     name = session.get("name")
-    try:
-        rooms[room]["members"] += 1
-    except:
-        rooms[room]["members"] = 1
+    rooms[room]["members"] += 1
     if not room or not name:
         return
     if room not in rooms:
         leave_room(room)
         return
-    #if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
-    #    rooms[room]["members"] -= 1
-    #    leave_room(room)
-    #    return
+    if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
+        rooms[room]["members"] -= 1
+        leave_room(room)
+        return
 
     h_room = str(random.randint(1, 10000000))
 

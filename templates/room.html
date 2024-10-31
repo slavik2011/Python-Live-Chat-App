@@ -1,4 +1,5 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %}
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,203 +7,181 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Room</title>
     <link rel="stylesheet" href="/static/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
 </head>
 <body>
 <div class="message-box">
   <h2>Chat Room: {{ code }}</h2>
   <div class="messages" id="messages"></div>
   <div class="inputs">
-    <textarea
+    <input
       type="text"
       placeholder="Message"
       name="message"
       id="message"
       class="message-input"
-    ></textarea>
+    />
     <div class="file-input-container">
       <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
       <button type="button" id="upload-btn" class="upload-btn">Upload File</button>
       <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
+      <button id="audio-btn" class="audio-btn">Record Audio</button>
+      <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
   </div>
 </div>
 
 <style>
-    .message-input {
-    width: 70%;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    margin-right: 10px;
-  }
-
-  .file-input-container {
-    display: flex;
-    align-items: center;
-  }
-
-  .file-input {
-    display: none; /* Hide the file input */
-  }
-
-  .upload-btn {
-    padding: 10px 15px;
-    background-color: #007bff; /* Blue background */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    margin-right: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .upload-btn:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-  }
-
-  .send-btn {
-    padding: 10px 15px;
-    background-color: #28a745; /* Green background */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .send-btn:hover {
-    background-color: #218838; /* Darker green on hover */
-  }
-
-  .send-btn:disabled {
-    background-color: #ccc; /* Gray background for disabled state */
-    cursor: not-allowed;
-  }
-
-  .send-btn:focus, .upload-btn:focus {
-    outline: none; /* Remove focus outline */
-  }
-
-  .message-box { width: 80%; margin: auto; }
-  .message-input, .upload-btn, .send-btn { margin: 5px; }
-  .rainbow-text {
-    background-image: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF);
-    -webkit-background-clip: text;
-    color: transparent;
-    animation: rainbow 1.5s linear infinite;
-  }
-  @keyframes rainbow {
-    from { background-position: 0%; }
-    to { background-position: 100%; }
-  }
+    .message-input { width: 70%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
+    .file-input-container { display: flex; align-items: center; }
+    .file-input { display: none; }
+    .upload-btn, .send-btn, .audio-btn {
+        padding: 10px 15px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .upload-btn { background-color: #007bff; margin-right: 10px; }
+    .send-btn { background-color: #28a745; margin-right: 10px; }
+    .audio-btn { background-color: #6c757d; }
+    .upload-btn:hover { background-color: #0056b3; }
+    .send-btn:hover { background-color: #218838; }
+    .audio-btn:hover { background-color: #5a6268; }
+    .send-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+    .message-box { width: 80%; margin: auto; }
+    .message-input, .upload-btn, .send-btn, .audio-btn { margin: 5px; }
+    .rainbow-text {
+        background-image: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF);
+        -webkit-background-clip: text;
+        color: transparent;
+        animation: rainbow 1.5s linear infinite;
+    }
+    @keyframes rainbow {
+        from { background-position: 0%; }
+        to { background-position: 100%; }
+    }
 </style>
 
 <script type="text/javascript">
   const socketio = io();
   const messageInput = document.getElementById("message");
+  const recordBtn = document.getElementById("audio-btn");
+  let mediaRecorder;
+  let isRecording = false;
 
-  // Function to add a new message to the chat
   const createMessage = (name, msg, type, color = '#000000') => {
     const messages = document.getElementById("messages");
-
-    // Apply rainbow effect to the nickname only if color is set to 'rainbow'
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
     const nameColor = color !== 'rainbow' ? `style="color: ${color};"` : '';
-    const htmlMessage = marked.parse(msg);
-
     let content = '';
+
     if (type === 'text') {
-      content = `
-      <div class="text">
-          <strong class="${nameStyle}" ${nameColor}>${name}</strong>: ${htmlMessage}
-          <span class="muted">${new Date().toLocaleString()}</span>
-      </div>`;
-    } else if (type === 'image') {
-      content = `
-      <div class="media">
-          <strong class="${nameStyle}" ${nameColor}>${name}</strong>: <br>
-          <img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />
-          <span class="muted">${new Date().toLocaleString()}</span>
-      </div>`;
-    } else if (type === 'video') {
-      content = `
-      <div class="media">
-          <strong class="${nameStyle}" ${nameColor}>${name}</strong>: <br>
-          <video controls style="max-width: 100%; height: auto;">
-              <source src="${msg}" type="video/mp4">
-              Your browser does not support the video tag.
-          </video>
-          <span class="muted">${new Date().toLocaleString()}</span>
-      </div>`;
+      content = `<div class="text"><strong class="${nameStyle}" ${nameColor}>${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>`;
+    } else if (type === 'image' || type === 'audio') {
+      content = `<div class="media"><strong class="${nameStyle}" ${nameColor}>${name}</strong>: <br>`;
+      if (type === 'image') content += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
+      else content += `<audio controls src="${msg}"></audio>`;
+      content += `<span class="muted">${new Date().toLocaleString()}</span></div>`;
     }
     messages.innerHTML += content;
+    messages.scrollTop = messages.scrollHeight; // Auto scroll to bottom
   };
 
-// Add event listener for Shift+Enter in the textarea
-messageInput.addEventListener("keydown", function(e) {
-  if (e.shiftKey && e.code === "Enter" && !messageInput.disabled) {
-    e.preventDefault();
-    this.value += "\n";
-  }
-if (e.code === "Enter" && !messageInput.disabled) {
-    e.preventDefault();
-  }
-});
-
-  // Function to send a message to the server
   const sendMessage = () => {
-    const messageInput = document.getElementById("message");
     const fileInput = document.getElementById("file-input");
-    const message = messageInput.value;
+    const message = messageInput.value.trim();
 
-    // Check if there's a text message or a file to send
-    if (message === "" && fileInput.files.length === 0) return;
+    console.log("Sending message:", message); // Debugging line
 
-    // Handle text message
+    if (message === "" && fileInput.files.length === 0) {
+        console.log("No message or file to send"); // Debugging line
+        return;
+    }
+
     if (message !== "") {
-      socketio.emit("message", { message: message, type: 'text', color: 'rainbow' });
+        socketio.emit("message", { message: message, type: 'text', color: 'rainbow' });
+        console.log("Message sent"); // Debugging line
     }
 
-    // Handle file messages
     if (fileInput.files.length > 0) {
-      const file = fileInput.files[0];
-      const formData = new FormData();
-      formData.append('file', file);
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
 
-      fetch("/upload-file", {
-        method: "POST",
-        body: formData
-      }).then(response => response.json())
-      .then(data => {
-        if (data.fileUrl) {
-          const type = data.fileType === 'video' ? 'video' : 'image';
-          socketio.emit("message", { message: data.fileUrl, type: type, color: 'rainbow' });
-        }
-      }).catch(error => console.error("Error uploading file:", error));
+        fetch("/upload-file", { method: "POST", body: formData })
+            .then(response => response.json())
+            .then(data => {
+                if (data.fileUrl) {
+                    const type = data.fileType === 'audio' ? 'audio' : data.fileType === 'video' ? 'video' : 'image';
+                    socketio.emit("message", { message: data.fileUrl, type: type, color: 'rainbow' });
+                    console.log("File sent as message"); // Debugging line
+                }
+            })
+            .catch(error => console.error("Error uploading file:", error));
     }
 
-    // Reset input fields
     messageInput.value = "";
     fileInput.value = "";
-  };
+};
+
+
+  document.getElementById("upload-btn").addEventListener("click", () => {
+    document.getElementById("file-input").click();
+  });
+
+  document.getElementById("audio-btn").addEventListener("click", async () => {
+    if (isRecording) {
+      mediaRecorder.stop(); // Stop the recording
+      return;
+    }
+
+    isRecording = true; // Set recording flag
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      const audioChunks = [];
+
+      mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+      mediaRecorder.start();
+
+      recordBtn.textContent = "Stop Recording"; // Change button text to indicate recording
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'audio.wav');
+
+        fetch("/upload-file", { method: "POST", body: formData })
+          .then(response => response.json())
+          .then(data => {
+            if (data.fileUrl) {
+              socketio.emit("message", { message: data.fileUrl, type: 'audio', color: 'rainbow' });
+            }
+          })
+          .catch(error => console.error("Error uploading audio:", error))
+          .finally(() => {
+            isRecording = false; // Reset recording flag
+            recordBtn.textContent = "Record Audio"; // Reset button text
+          });
+      };
+    } catch (error) {
+      console.error("Error capturing audio:", error);
+      isRecording = false; // Reset recording flag on error
+      recordBtn.textContent = "Record Audio"; // Reset button text on error
+    }
+  });
 
   messageInput.addEventListener("keydown", function (e) {
-    if (!e.shiftKey && e.code === "Enter" && !messageInput.disabled) {
+    if (e.code === "Enter" && !messageInput.disabled) {
       sendMessage();
     }
   });
 
   socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type, data.color);
-  });
-
-  document.getElementById("upload-btn").addEventListener("click", () => {
-    document.getElementById("file-input").click();
   });
 </script>
 
