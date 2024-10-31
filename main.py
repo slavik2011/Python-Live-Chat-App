@@ -167,6 +167,7 @@ def message(data):
         "type": data.get("type", "text"),
         "color": color,
     }
+    print(content['message'], content['type'])
 
     # Check if the message is of type 'audio'
     if content["type"] == "audio":
