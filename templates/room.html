@@ -165,12 +165,14 @@
           .finally(() => {
             isRecording = false; // Reset recording flag
             recordBtn.textContent = "Record Audio"; // Reset button text
+            mediaRecorder.stop(); // Stop the recording
           });
       };
     } catch (error) {
       console.error("Error capturing audio:", error);
       isRecording = false; // Reset recording flag on error
       recordBtn.textContent = "Record Audio"; // Reset button text on error
+      mediaRecorder.stop(); // Stop the recording
     }
   });
 
