@@ -115,7 +115,7 @@ def upload_file():
         print(f"Saving file to {file_path}")  # Debugging statement
         file.save(file_path)
 
-        file_type = 'audio' if filename.endswith('.wav') else 'image'
+        file_type = 'audio' if filename.endswith('.wav') or filename.endswith('.mp3') else 'image'
         file_url = f"/uploads/{filename}"
 
         return jsonify({'fileUrl': file_url, 'fileType': file_type})

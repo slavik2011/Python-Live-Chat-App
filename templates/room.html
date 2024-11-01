@@ -66,123 +66,151 @@
 
 <script type="text/javascript">
   const socketio = io();
-  const messageInput = document.getElementById("message");
-  const recordBtn = document.getElementById("audio-btn");
-  let mediaRecorder;
-  let isRecording = false;
+const messageInput = document.getElementById("message");
+const recordBtn = document.getElementById("audio-btn");
+let mediaRecorder;
+let isRecording = false;
+let pageIsActive = true;
 
-  const createMessage = (name, msg, type, color = '#000000') => {
+window.onfocus = () => {
+    pageIsActive = true;
+    console.log("Window is focused:", pageIsActive);
+};
+window.onblur = () => {
+    pageIsActive = false;
+    console.log("Window is not focused:", pageIsActive);
+};
+Notification.requestPermission()
+
+const createMessage = (name, msg, type, color = '#000000') => {
     const messages = document.getElementById("messages");
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
     const nameColor = color !== 'rainbow' ? `style="color: ${color};"` : '';
     let content = '';
 
     if (type === 'text') {
-      content = `<div class="text"><strong class="${nameStyle}" ${nameColor}>${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>`;
-    } else if (type === 'image' || type === 'audio') {
-      content = `<div class="media"><strong class="${nameStyle}" ${nameColor}>${name}</strong>: <br>`;
-      if (type === 'image') content += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
-      else content += `<audio controls src="${msg}"></audio>`;
-      content += `<span class="muted">${new Date().toLocaleString()}</span></div>`;
+        content = `<div><strong class="${nameStyle}" ${nameColor}>${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span></div>`;
+    } else if (type === 'image' || type === 'audio' || type === 'video') {
+        content = `<div><strong class="${nameStyle}" ${nameColor}>${name}</strong>: <br>`;
+        if (type === 'image') content += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
+        else if (type === 'video') content += `<video src="${msg}" controls style="max-width: 100%; height: auto;"></video>`;
+        else content += `<audio controls src="${msg}"></audio>`;
+        content += `<span class="muted">${new Date().toLocaleString()}</span></div>`;
     }
-    messages.innerHTML += content;
-    messages.scrollTop = messages.scrollHeight; // Auto scroll to bottom
-  };
 
-  const sendMessage = () => {
+    messages.innerHTML += content;
+    messages.scrollTop = messages.scrollHeight;
+};
+
+const sendMessage = () => {
     const fileInput = document.getElementById("file-input");
     const message = messageInput.value.trim();
 
-    console.log("Sending message:", message); // Debugging line
+    if (message || fileInput.files.length > 0) {
+        if (message) {
+            socketio.emit("message", {message: message, type: 'text', color: 'rainbow'});
+        }
 
-    if (message === "" && fileInput.files.length === 0) {
-        console.log("No message or file to send"); // Debugging line
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch("/upload-file", {method: "POST", body: formData})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.fileUrl) {
+                        const type = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'audio';
+                        socketio.emit("message", {message: data.fileUrl, type: type, color: 'rainbow'});
+                    }
+                })
+                .catch(error => console.error("Error uploading file:", error));
+        }
+
+        messageInput.value = "";
+        fileInput.value = "";
+    }
+};
+
+document.getElementById("upload-btn").addEventListener("click", () => {
+    document.getElementById("file-input").click();
+});
+
+document.getElementById("audio-btn").addEventListener("click", async () => {
+    if (isRecording) {
+        mediaRecorder.stop();
         return;
     }
 
-    if (message !== "") {
-        socketio.emit("message", { message: message, type: 'text', color: 'rainbow' });
-        console.log("Message sent"); // Debugging line
-    }
-
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-
-        fetch("/upload-file", { method: "POST", body: formData })
-            .then(response => response.json())
-            .then(data => {
-                if (data.fileUrl) {
-                    const type = data.fileType === 'audio' ? 'audio' : data.fileType === 'video' ? 'video' : 'image';
-                    socketio.emit("message", { message: data.fileUrl, type: type, color: 'rainbow' });
-                    console.log("File sent as message"); // Debugging line
-                }
-            })
-            .catch(error => console.error("Error uploading file:", error));
-    }
-
-    messageInput.value = "";
-    fileInput.value = "";
-};
-
-
-  document.getElementById("upload-btn").addEventListener("click", () => {
-    document.getElementById("file-input").click();
-  });
-
-  document.getElementById("audio-btn").addEventListener("click", async () => {
-    if (isRecording) {
-      mediaRecorder.stop(); // Stop the recording
-      return;
-    }
-
-    isRecording = true; // Set recording flag
+    isRecording = true;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      const audioChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        mediaRecorder = new MediaRecorder(stream);
+        const audioChunks = [];
 
-      mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-      mediaRecorder.start();
+        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+        mediaRecorder.start();
 
-      recordBtn.textContent = "Stop Recording"; // Change button text to indicate recording
+        recordBtn.textContent = "Stop Recording";
 
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-        const formData = new FormData();
-        formData.append('file', audioBlob, 'audio.wav');
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'audio.wav');
 
-        fetch("/upload-file", { method: "POST", body: formData })
-          .then(response => response.json())
-          .then(data => {
-            if (data.fileUrl) {
-              socketio.emit("message", { message: data.fileUrl, type: 'audio', color: 'rainbow' });
-            }
-          })
-          .catch(error => console.error("Error uploading audio:", error))
-          .finally(() => {
-            isRecording = false; // Reset recording flag
-            recordBtn.textContent = "Record Audio"; // Reset button text
-          });
-      };
+            fetch("/upload-file", {method: "POST", body: formData})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.fileUrl) {
+                        socketio.emit("message", {message: data.fileUrl, type: 'audio', color: 'rainbow'});
+                    }
+                })
+                .catch(error => console.error("Error uploading audio:", error))
+                .finally(() => {
+                    isRecording = false;
+                    recordBtn.textContent = "Record Audio";
+                });
+        };
     } catch (error) {
-      console.error("Error capturing audio:", error);
-      isRecording = false; // Reset recording flag on error
-      recordBtn.textContent = "Record Audio"; // Reset button text on error
+        console.error("Error capturing audio:", error);
+        isRecording = false;
+        recordBtn.textContent = "Record Audio";
     }
-  });
+});
 
-  messageInput.addEventListener("keydown", function (e) {
+messageInput.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && !messageInput.disabled) {
-      sendMessage();
+        sendMessage();
     }
-  });
+});
 
-  socketio.on("message", (data) => {
+socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type, data.color);
-  });
+    if (!pageIsActive) {
+        showNotification(data.name, data.message);
+    }
+});
+
+
+function showNotification(title, body) {
+    if (!("Notification" in window)) {
+        console.error("This browser does not support desktop notifications");
+        return;
+    }
+
+    if (Notification.permission === "granted") {
+        // Create the notification with the correct title and body
+        new Notification(title, { body: body }); // Use title and body here
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === "granted") {
+                // Create the notification if permission is granted *now*
+                new Notification(title, { body: body }); // Use title and body here
+            }
+        });
+    }
+}
 </script>
 
 </body>
