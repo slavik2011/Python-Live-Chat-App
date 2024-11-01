@@ -10,6 +10,7 @@ import base64
 import uuid
 import json
 import sys
+import datetime
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = f"secretencryptionkey-"  # Replace with a strong secret key
@@ -166,6 +167,7 @@ def message(data):
         "message": data.get("message", ""),
         "type": data.get("type", "text"),
         "color": color,
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     # Check if the message is of type 'audio'
@@ -219,6 +221,7 @@ def connect(auth):
                 "message": ms,
                 "type": 'text',
                 "color": '#e455e2',
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
     
             rooms[room]["messages"].append(content)
@@ -230,6 +233,7 @@ def connect(auth):
         "message": f"{username} has joined the room.",
         "type": 'text',
         "color": '#e455e2',
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     rooms[room]["messages"].append(content)
@@ -245,6 +249,7 @@ def disconnect():
         "message": f"{username} has left the room.",
         "type": 'text',
         "color": '#e455e2',
+        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     rooms[room]["messages"].append(content)
