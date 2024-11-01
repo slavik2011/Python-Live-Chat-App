@@ -211,6 +211,19 @@ def connect(auth):
     rooms[room]["names"].append(name)
     room_last_activity[room] = time.time()  # Track last activity
     color, username = get_username_color(name)
+    if room != 'MAIN':
+        system_messages = ['⚠️ WARNING ⚠️', 'You created a private room. This room will be deleted in 1 hour of unactivity.', '⚠️ WARNING ⚠️']
+        for ms in system_messages:
+            content = {
+                "name": 'System',
+                "message": ms,
+                "type": 'text',
+                "color": '#e455e2',
+            }
+    
+            rooms[room]["messages"].append(content)
+        
+            socketio.emit("message", content, room=room)
 
     content = {
         "name": 'System',
@@ -246,7 +259,7 @@ def disconnect():
 def remove_inactive_rooms():
     current_time = time.time()
     for room, last_activity in list(room_last_activity.items()):
-        if room != 'MAIN' and rooms[room]["members"] == 0 and (current_time - last_activity) > 300:
+        if room != 'MAIN' and rooms[room]["members"] == 0 and (current_time - last_activity) > 3600:
             # Delete all media files in the room's upload folder
             room_folder = os.path.join(app.config["UPLOAD_FOLDER"], room)
             if os.path.exists(room_folder):
