@@ -231,6 +231,12 @@ def connect(auth):
         
             socketio.emit("message", content, room=room)
 
+    members_content = {
+        "number": rooms[room]["members"]
+    }
+    
+    socketio.emit("members", members_content, room=room)
+
     content = {
         "name": 'System',
         "message": f"{username} has joined the room.",
@@ -262,6 +268,11 @@ def disconnect():
         rooms[room]["members"] -= 1
         if rooms[room]["members"] == 0:
             room_last_activity[room] = time.time()  # Track time when last user left
+    members_content = {
+        "number": rooms[room]["members"]
+    }
+    
+    socketio.emit("members", members_content, room=room)
 
 @socketio.on("remove_inactive_rooms")
 def remove_inactive_rooms():
