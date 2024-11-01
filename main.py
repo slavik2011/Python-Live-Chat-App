@@ -189,6 +189,7 @@ def message(data):
 
 @socketio.on("connect")
 def connect(auth):
+    time.sleep(1)
     room = session.get("room")
     name = session.get("name")
     rooms[room]["members"] += 1
