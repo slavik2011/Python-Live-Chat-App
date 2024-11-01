@@ -198,10 +198,10 @@ def connect(auth):
     if room not in rooms:
         leave_room(room)
         return
-    if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
+    '''if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
         rooms[room]["members"] -= 1
         leave_room(room)
-        return
+        return'''
 
     h_room = str(random.randint(1, 10000000))
 
