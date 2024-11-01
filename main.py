@@ -210,11 +210,29 @@ def connect(auth):
     join_room(room)
     rooms[room]["names"].append(name)
     room_last_activity[room] = time.time()  # Track last activity
-    socketio.emit("message", {"name": name, "message": f"{name} has joined the room."}, room=room)
+    color, username = get_username_color(name)
+
+    content = {
+        "name": 'System',
+        "message": f"{username} has joined the room.",
+        "type": 'text',
+        "color": '#e455e2',
+    }
+    
+    socketio.emit("message", content, room=room)
 
 @socketio.on("disconnect")
 def disconnect():
     room = session.get("room")
+    color, username = get_username_color(session.get("name"))
+    content = {
+        "name": 'System',
+        "message": f"{username} has left the room.",
+        "type": 'text',
+        "color": '#e455e2',
+    }
+    
+    socketio.emit("message", content, room=room)
     if room in rooms:
         rooms[room]["members"] -= 1
         if rooms[room]["members"] == 0:
