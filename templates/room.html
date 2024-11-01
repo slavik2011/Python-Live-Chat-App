@@ -82,7 +82,7 @@ window.onblur = () => {
 };
 Notification.requestPermission()
 
-const createMessage = (name, msg, type, color = '#000000') => {
+const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     const messages = document.getElementById("messages");
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
     const nameColor = color !== 'rainbow' ? `style="color: ${color};"` : '';
@@ -95,7 +95,7 @@ const createMessage = (name, msg, type, color = '#000000') => {
         if (type === 'image') content += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
         else if (type === 'video') content += `<video src="${msg}" controls style="max-width: 100%; height: auto;"></video>`;
         else content += `<audio controls src="${msg}"></audio>`;
-        content += `<span class="muted">${new Date().toLocaleString()}</span></div>`;
+        content += `<span class="muted">${timestamp}</span></div>`;
     }
 
     messages.innerHTML += content;
@@ -186,7 +186,7 @@ messageInput.addEventListener("keydown", (e) => {
 });
 
 socketio.on("message", (data) => {
-    createMessage(data.name, data.message, data.type, data.color);
+    createMessage(data.name, data.message, data.type, data.timestamp, data.color);
     if (!pageIsActive) {
         showNotification(data.name, data.message);
     }
