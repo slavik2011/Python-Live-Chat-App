@@ -208,6 +208,8 @@ def connect(auth):
 
     for msg in rooms[room]['messages']:
         socketio.emit("message", msg, room=h_room)
+
+    time.sleep(1)
     
     join_room(room)
     rooms[room]["names"].append(name)
