@@ -12,6 +12,7 @@
 <body>
 <div class="message-box">
   <h2>Chat Room: {{ code }}</h2>
+  <h3 id="members">0 members</h3>
   <div class="messages" id="messages"></div>
   <div class="inputs">
     <input
@@ -192,6 +193,13 @@ socketio.on("message", (data) => {
     }
 });
 
+socketio.on("members", (data) => {
+    // Get the element with the ID "myText"
+    const memberstext = document.getElementById("members");
+
+    // Change the HTML content of the element
+    memberstext.innerHTML = `${data.number} members`;
+});
 
 function showNotification(title, body) {
     if (!("Notification" in window)) {
