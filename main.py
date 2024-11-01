@@ -4,7 +4,7 @@ import random
 import os
 from string import ascii_uppercase
 from werkzeug.utils import secure_filename
-import mimetypes  # Crucial for detecting file types
+import mimetypes  # Crucial for detecting file types (2)
 import time
 import base64
 import uuid
