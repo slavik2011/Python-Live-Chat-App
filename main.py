@@ -173,13 +173,13 @@ def message(data):
         # The message should contain the audio file URL
         content["message"] = data.get("message")  # This should be the URL sent from the client
 
-    # Store the message in the room's message history
-    rooms[room]["messages"].append(content)
-
     # Other security checks...
     if "<" in content["message"] and ">" in content["message"]:
-        content["message"] = "Security Warning: Attempted code execution!"
+        content["message"] = "Warning: Attempted code execution!"
         content["name"] = "Security"
+        content['color'] = '#e455e2'
+
+    rooms[room]["messages"].append(content)
 
     # Emit the message to all users in the room
     socketio.emit("message", content, room=room)
@@ -218,6 +218,8 @@ def connect(auth):
         "type": 'text',
         "color": '#e455e2',
     }
+
+    rooms[room]["messages"].append(content)
     
     socketio.emit("message", content, room=room)
 
@@ -231,6 +233,8 @@ def disconnect():
         "type": 'text',
         "color": '#e455e2',
     }
+
+    rooms[room]["messages"].append(content)
     
     socketio.emit("message", content, room=room)
     if room in rooms:
