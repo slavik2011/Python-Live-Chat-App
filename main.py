@@ -40,7 +40,7 @@ colored_text_codes = {
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
     os.makedirs(app.config["UPLOAD_FOLDER"])
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "wav", "mp3"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "mov", "wav", "mp3", "webm"}
 
 def remove_folder_content(folderpath):
     for filename in os.listdir(folderpath):
