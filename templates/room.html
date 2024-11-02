@@ -186,10 +186,10 @@ recordBtn.addEventListener("click", async () => {
     }
 });
 
-// Handle video recording
 videoBtn.addEventListener("click", async () => {
     if (isVideoRecording) {
         videoRecorder.stop();
+        // Stop each track of the stream (both audio and video)
         videoRecorder.stream.getTracks().forEach(track => track.stop());
         return;
     }
@@ -198,18 +198,22 @@ videoBtn.addEventListener("click", async () => {
     videoBtn.textContent = "Stop Recording";
 
     try {
+        // Request permission and start capturing video and audio
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         videoRecorder = new MediaRecorder(stream);
         const videoChunks = [];
 
+        // Collect video data chunks
         videoRecorder.ondataavailable = event => videoChunks.push(event.data);
         videoRecorder.start();
 
+        // When the recording stops, process and upload the video
         videoRecorder.onstop = async () => {
             const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             const formData = new FormData();
-            formData.append('file', videoBlob, 'video.webm');
+            formData.append('file', videoBlob, 'video.webm'); // Correctly append the video blob to form data
 
+            // Send video to server
             fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
@@ -235,6 +239,12 @@ socketio.on("message", ({ name, message, type, timestamp, color }) => {
     createMessage(name, message, type, timestamp, color);
     if (!pageIsActive && Notification.permission === 'granted') {
         new Notification("New message from " + name);
+    }
+});
+
+messageInput.addEventListener("keydown", (e) => {
+    if (e.code === "Enter" && !messageInput.disabled) {
+        sendMessage();
     }
 });
 
