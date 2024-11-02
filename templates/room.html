@@ -27,6 +27,7 @@
       <button type="button" id="upload-btn" class="upload-btn">Upload File</button>
       <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
       <button id="audio-btn" class="audio-btn">Record Audio</button>
+      <button id="video-btn" class="video-btn">Record Video</button>
       <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
   </div>
@@ -36,7 +37,7 @@
     .message-input { width: 70%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
     .file-input-container { display: flex; align-items: center; }
     .file-input { display: none; }
-    .upload-btn, .send-btn, .audio-btn {
+    .upload-btn, .send-btn, .audio-btn, .video-btn {
         padding: 10px 15px;
         color: white;
         border: none;
@@ -46,13 +47,15 @@
     }
     .upload-btn { background-color: #007bff; margin-right: 10px; }
     .send-btn { background-color: #28a745; margin-right: 10px; }
-    .audio-btn { background-color: #6c757d; }
+    .audio-btn { background-color: #6c757d; margin-right: 10px; }
+    .video-btn { background-color: #ff5722; }
     .upload-btn:hover { background-color: #0056b3; }
     .send-btn:hover { background-color: #218838; }
     .audio-btn:hover { background-color: #5a6268; }
+    .video-btn:hover { background-color: #e64a19; }
     .send-btn:disabled { background-color: #ccc; cursor: not-allowed; }
     .message-box { width: 80%; margin: auto; }
-    .message-input, .upload-btn, .send-btn, .audio-btn { margin: 5px; }
+    .message-input, .upload-btn, .send-btn, .audio-btn, .video-btn { margin: 5px; }
     .rainbow-text {
         background-image: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF);
         -webkit-background-clip: text;
@@ -66,11 +69,14 @@
 </style>
 
 <script type="text/javascript">
-  const socketio = io();
+const socketio = io();
 const messageInput = document.getElementById("message");
 const recordBtn = document.getElementById("audio-btn");
+const videoBtn = document.getElementById("video-btn");
 let mediaRecorder;
+let videoRecorder;
 let isRecording = false;
+let isVideoRecording = false;
 let pageIsActive = true;
 
 window.onfocus = () => {
@@ -137,7 +143,7 @@ document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
 });
 
-document.getElementById("audio-btn").addEventListener("click", async () => {
+recordBtn.addEventListener("click", async () => {
     if (isRecording) {
         mediaRecorder.stop();
         return;
@@ -180,47 +186,57 @@ document.getElementById("audio-btn").addEventListener("click", async () => {
     }
 });
 
-messageInput.addEventListener("keydown", (e) => {
-    if (e.code === "Enter" && !messageInput.disabled) {
-        sendMessage();
-    }
-});
-
-socketio.on("message", (data) => {
-    createMessage(data.name, data.message, data.type, data.timestamp, data.color);
-    if (!pageIsActive) {
-        showNotification(data.name, data.message);
-    }
-});
-
-socketio.on("members", (data) => {
-    // Get the element with the ID "myText"
-    const memberstext = document.getElementById("members");
-
-    // Change the HTML content of the element
-    memberstext.innerHTML = `${data.number} members`;
-});
-
-function showNotification(title, body) {
-    if (!("Notification" in window)) {
-        console.error("This browser does not support desktop notifications");
+videoBtn.addEventListener("click", async () => {
+    if (isVideoRecording) {
+        videoRecorder.stop();
         return;
     }
 
-    if (Notification.permission === "granted") {
-        // Create the notification with the correct title and body
-        new Notification(title, { body: body }); // Use title and body here
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(function(permission) {
-            if (permission === "granted") {
-                // Create the notification if permission is granted *now*
-                new Notification(title, { body: body }); // Use title and body here
-            }
-        });
-    }
-}
-</script>
+    isVideoRecording = true;
+    videoBtn.textContent = "Stop Recording";
 
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        videoRecorder = new MediaRecorder(stream);
+        const videoChunks = [];
+
+        videoRecorder.ondataavailable = event => videoChunks.push(event.data);
+        videoRecorder.start();
+
+        videoRecorder.onstop = async () => {
+            const videoBlob = new Blob(videoChunks, {type: 'video/webm'});
+            const formData = new FormData();
+            formData.append('file', videoBlob, 'video.webm');
+
+            fetch("/upload-file", {method: "POST", body: formData})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.fileUrl) {
+                        socketio.emit("message", {message: data.fileUrl, type: 'video', color: 'rainbow'});
+                    }
+                })
+                .catch(error => console.error("Error uploading video:", error))
+                .finally(() => {
+                    isVideoRecording = false;
+                    videoBtn.textContent = "Record Video";
+                });
+        };
+    } catch (error) {
+        console.error("Error capturing video:", error);
+        isVideoRecording = false;
+        videoBtn.textContent = "Record Video";
+    }
+});
+
+socketio.on("message", data => {
+    const {name, message, type, timestamp, color} = data;
+    createMessage(name, message, type, timestamp, color);
+
+    if (!pageIsActive && Notification.permission === "granted") {
+        new Notification(`${name}`, {body: message});
+    }
+});
+</script>
 </body>
 </html>
 {% endblock %}
