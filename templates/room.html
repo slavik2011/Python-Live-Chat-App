@@ -34,6 +34,36 @@
 </div>
 
 <style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .message-box {
+        display: flex;
+        flex-direction: column;
+        height: 80vh; /* Set the height to a percentage of the viewport height */
+        width: 80vw; /* Set the width to a percentage of the viewport width */
+        max-height: 90vh; /* Optional: maximum height */
+        max-width: 90vw; /* Optional: maximum width */
+        padding: 10px; /* Some padding around */
+        box-sizing: border-box;
+        background-color: #f8f9fa; /* Optional: light background */
+        border: 1px solid #ccc; /* Optional: border */
+        resize: both; /* Allow both horizontal and vertical resizing */
+        overflow: hidden; /* Hide overflow for clean look */
+    }
+
+    .messages {
+        flex: 1; /* Take up remaining space */
+        overflow-y: auto; /* Allow scrolling */
+        margin-bottom: 10px; /* Space for the input area */
+        border: 1px solid #ccc; /* Optional: border for the messages area */
+        padding: 10px; /* Padding inside the messages area */
+        background-color: white; /* Background color for the messages */
+    }
+
     .message-input { width: 70%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
     .file-input-container { display: flex; align-items: center; }
     .file-input { display: none; }
@@ -54,7 +84,6 @@
     .audio-btn:hover { background-color: #5a6268; }
     .video-btn:hover { background-color: #e64a19; }
     .send-btn:disabled { background-color: #ccc; cursor: not-allowed; }
-    .message-box { width: 80%; margin: auto; }
     .rainbow-text {
         background-image: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF);
         -webkit-background-clip: text;
@@ -108,7 +137,6 @@ const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     messages.appendChild(messageDiv);
     messages.scrollTop = messages.scrollHeight; // Scroll to the latest message
 };
-
 
 const sendMessage = () => {
     const fileInput = document.getElementById("file-input");
@@ -188,34 +216,30 @@ recordBtn.addEventListener("click", async () => {
     }
 });
 
+// Handle video recording
 videoBtn.addEventListener("click", async () => {
     if (isVideoRecording) {
         videoRecorder.stop();
-        // Stop each track of the stream (both audio and video)
-        videoRecorder.stream.getTracks().forEach(track => track.stop());
         return;
     }
 
     isVideoRecording = true;
-    videoBtn.textContent = "Stop Recording";
 
     try {
-        // Request permission and start capturing video and audio
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoRecorder = new MediaRecorder(stream);
         const videoChunks = [];
 
-        // Collect video data chunks
         videoRecorder.ondataavailable = event => videoChunks.push(event.data);
         videoRecorder.start();
 
-        // When the recording stops, process and upload the video
+        videoBtn.textContent = "Stop Recording Video";
+
         videoRecorder.onstop = async () => {
             const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             const formData = new FormData();
-            formData.append('file', videoBlob, 'video.webm'); // Correctly append the video blob to form data
+            formData.append('file', videoBlob, 'video.webm');
 
-            // Send video to server
             fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
@@ -236,12 +260,9 @@ videoBtn.addEventListener("click", async () => {
     }
 });
 
-// Handle incoming messages
-socketio.on("message", ({ name, message, type, timestamp, color }) => {
-    createMessage(name, message, type, timestamp, color);
-    if (!pageIsActive && Notification.permission === 'granted') {
-        new Notification("New message from " + name);
-    }
+// Socket events for messages
+socketio.on("message", (data) => {
+    createMessage(data.name, data.message, data.type, data.timestamp, data.color);
 });
 
 messageInput.addEventListener("keydown", (e) => {
@@ -250,12 +271,9 @@ messageInput.addEventListener("keydown", (e) => {
     }
 });
 
-// Update members count
-socketio.on("members", (data) => {
-    updateMembersCount(data.number);
-});
-
+socketio.on("update_members", updateMembersCount);
 </script>
+
 </body>
 </html>
 {% endblock %}
