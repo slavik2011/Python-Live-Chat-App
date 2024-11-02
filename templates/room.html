@@ -84,7 +84,7 @@ window.onblur = () => { pageIsActive = false; };
 Notification.requestPermission();
 
 const updateMembersCount = (count) => {
-    document.getElementById("members").textContent = `${count} members`;
+    document.getElementById("members").innerHTML = `${count} members`;
 };
 
 // Function to create messages
@@ -240,7 +240,7 @@ socketio.on("message", ({ name, message, type, timestamp, color }) => {
 
 // Update members count
 socketio.on("members", (data) => {
-    updateMembersCount(data.count);
+    updateMembersCount(data.number);
 });
 
 </script>
