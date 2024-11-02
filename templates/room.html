@@ -55,7 +55,6 @@
     .video-btn:hover { background-color: #e64a19; }
     .send-btn:disabled { background-color: #ccc; cursor: not-allowed; }
     .message-box { width: 80%; margin: auto; }
-    .message-input, .upload-btn, .send-btn, .audio-btn, .video-btn { margin: 5px; }
     .rainbow-text {
         background-image: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF);
         -webkit-background-clip: text;
@@ -79,16 +78,16 @@ let isRecording = false;
 let isVideoRecording = false;
 let pageIsActive = true;
 
-window.onfocus = () => {
-    pageIsActive = true;
-    console.log("Window is focused:", pageIsActive);
-};
-window.onblur = () => {
-    pageIsActive = false;
-    console.log("Window is not focused:", pageIsActive);
-};
-Notification.requestPermission()
+// Handle visibility for notifications
+window.onfocus = () => { pageIsActive = true; };
+window.onblur = () => { pageIsActive = false; };
+Notification.requestPermission();
 
+const updateMembersCount = (count) => {
+    document.getElementById("members").textContent = `${count} members`;
+};
+
+// Function to create messages
 const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     const messages = document.getElementById("messages");
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
@@ -115,7 +114,7 @@ const sendMessage = () => {
 
     if (message || fileInput.files.length > 0) {
         if (message) {
-            socketio.emit("message", {message: message, type: 'text', color: 'rainbow'});
+            socketio.emit("message", { message: message, type: 'text', color: 'rainbow' });
         }
 
         if (fileInput.files.length > 0) {
@@ -123,12 +122,12 @@ const sendMessage = () => {
             const formData = new FormData();
             formData.append('file', file);
 
-            fetch("/upload-file", {method: "POST", body: formData})
+            fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
                     if (data.fileUrl) {
                         const type = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'audio';
-                        socketio.emit("message", {message: data.fileUrl, type: type, color: 'rainbow'});
+                        socketio.emit("message", { message: data.fileUrl, type: type, color: 'rainbow' });
                     }
                 })
                 .catch(error => console.error("Error uploading file:", error));
@@ -143,6 +142,7 @@ document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
 });
 
+// Handle audio recording
 recordBtn.addEventListener("click", async () => {
     if (isRecording) {
         mediaRecorder.stop();
@@ -152,7 +152,7 @@ recordBtn.addEventListener("click", async () => {
     isRecording = true;
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         const audioChunks = [];
 
@@ -162,15 +162,15 @@ recordBtn.addEventListener("click", async () => {
         recordBtn.textContent = "Stop Recording";
 
         mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, {type: 'audio/wav'});
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
             const formData = new FormData();
             formData.append('file', audioBlob, 'audio.wav');
 
-            fetch("/upload-file", {method: "POST", body: formData})
+            fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
                     if (data.fileUrl) {
-                        socketio.emit("message", {message: data.fileUrl, type: 'audio', color: 'rainbow'});
+                        socketio.emit("message", { message: data.fileUrl, type: 'audio', color: 'rainbow' });
                     }
                 })
                 .catch(error => console.error("Error uploading audio:", error))
@@ -186,9 +186,11 @@ recordBtn.addEventListener("click", async () => {
     }
 });
 
+// Handle video recording
 videoBtn.addEventListener("click", async () => {
     if (isVideoRecording) {
         videoRecorder.stop();
+        videoRecorder.stream.getTracks().forEach(track => track.stop());
         return;
     }
 
@@ -196,7 +198,7 @@ videoBtn.addEventListener("click", async () => {
     videoBtn.textContent = "Stop Recording";
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         videoRecorder = new MediaRecorder(stream);
         const videoChunks = [];
 
@@ -204,15 +206,15 @@ videoBtn.addEventListener("click", async () => {
         videoRecorder.start();
 
         videoRecorder.onstop = async () => {
-            const videoBlob = new Blob(videoChunks, {type: 'video/webm'});
+            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             const formData = new FormData();
             formData.append('file', videoBlob, 'video.webm');
 
-            fetch("/upload-file", {method: "POST", body: formData})
+            fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
                     if (data.fileUrl) {
-                        socketio.emit("message", {message: data.fileUrl, type: 'video', color: 'rainbow'});
+                        socketio.emit("message", { message: data.fileUrl, type: 'video', color: 'rainbow' });
                     }
                 })
                 .catch(error => console.error("Error uploading video:", error))
@@ -228,14 +230,19 @@ videoBtn.addEventListener("click", async () => {
     }
 });
 
-socketio.on("message", data => {
-    const {name, message, type, timestamp, color} = data;
+// Handle incoming messages
+socketio.on("message", ({ name, message, type, timestamp, color }) => {
     createMessage(name, message, type, timestamp, color);
-
-    if (!pageIsActive && Notification.permission === "granted") {
-        new Notification(`${name}`, {body: message});
+    if (!pageIsActive && Notification.permission === 'granted') {
+        new Notification("New message from " + name);
     }
 });
+
+// Update members count
+socketio.on("members", (data) => {
+    updateMembersCount(data.count);
+});
+
 </script>
 </body>
 </html>
