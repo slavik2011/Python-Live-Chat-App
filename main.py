@@ -440,4 +440,4 @@ def start_room_cleanup_task():
 
 if __name__ == "__main__":
     socketio.start_background_task(start_room_cleanup_task)
-    socketio.run(app, debug=True, host='127.0.0.1', port=int(sys.argv[1]))
+    socketio.run(app, debug=True, host='0.0.0.0', port=int(sys.argv[1]))
