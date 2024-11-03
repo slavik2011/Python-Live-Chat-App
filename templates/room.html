@@ -14,6 +14,9 @@
   <h2>Chat Room: {{ code }}</h2>
   <h3 id="members">0 members</h3>
   <div class="messages" id="messages"></div>
+  <div id="video-preview-container" class="video-preview-container" style="display: none;">
+      <video id="videoPreview" autoplay muted style="max-width: 100%; height: auto;"></video>
+  </div>
   <div class="inputs">
     <input
       type="text"
@@ -28,7 +31,6 @@
       <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
       <button id="audio-btn" class="audio-btn">Record Audio</button>
       <button id="video-btn" class="video-btn">Record Video</button>
-      <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
       <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
   </div>
@@ -172,46 +174,53 @@ document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
 });
 
-recordBtn.addEventListener("click", async () => {
-    if (isRecording) {
-        mediaRecorder.stop();
+videoBtn.addEventListener("click", async () => {
+    if (isVideoRecording) {
+        videoRecorder.stop();
+        videoPreview.srcObject = null;
+        videoPreviewContainer.style.display = "none";
         return;
     }
 
-    isRecording = true;
+    isVideoRecording = true;
+    videoPreviewContainer.style.display = "block";
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        const audioChunks = [];
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoPreview.srcObject = stream;
+        videoRecorder = new MediaRecorder(stream);
+        const videoChunks = [];
 
-        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
-        mediaRecorder.start();
+        videoRecorder.ondataavailable = event => videoChunks.push(event.data);
+        videoRecorder.start();
 
-        recordBtn.textContent = "Stop Recording";
+        videoBtn.textContent = "Stop Recording Video";
 
-        mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        videoRecorder.onstop = async () => {
+            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             const formData = new FormData();
-            formData.append('file', audioBlob, 'audio.wav');
+            formData.append('file', videoBlob, 'video.webm');
 
             fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
                     if (data.fileUrl) {
-                        socketio.emit("message", { message: data.fileUrl, type: 'audio', color: 'rainbow' });
+                        socketio.emit("message", { message: data.fileUrl, type: 'video', color: 'rainbow' });
                     }
                 })
-                .catch(error => console.error("Error uploading audio:", error))
+                .catch(error => console.error("Error uploading video:", error))
                 .finally(() => {
-                    isRecording = false;
-                    recordBtn.textContent = "Record Audio";
+                    isVideoRecording = false;
+                    videoBtn.textContent = "Record Video";
+                    videoPreview.srcObject = null;
+                    videoPreviewContainer.style.display = "none";
                 });
         };
     } catch (error) {
-        console.error("Error capturing audio:", error);
-        isRecording = false;
-        recordBtn.textContent = "Record Audio";
+        console.error("Error capturing video:", error);
+        isVideoRecording = false;
+        videoBtn.textContent = "Record Video";
+        videoPreviewContainer.style.display = "none";
     }
 });
 
@@ -225,6 +234,8 @@ videoBtn.addEventListener("click", async () => {
 
     isVideoRecording = true;
     videoPreview.style.display = "block";
+    const messageDiv = document.createElement("div");
+    const messages = document.getElementById("messages");
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -279,7 +290,7 @@ messageInput.addEventListener("keydown", (e) => {
     }
 });
 
-socketio.on("member_count", updateMembersCount);
+socketio.on("members", updateMembersCount);
 </script>
 
 </body>
