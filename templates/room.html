@@ -180,7 +180,7 @@ recordBtn.addEventListener("click", async () => {
     isRecording = true;
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true });
         mediaRecorder = new MediaRecorder(stream);
         const audioChunks = [];
 
@@ -227,8 +227,9 @@ videoBtn.addEventListener("click", async () => {
     videoPreview.style.display = "block";
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        videoPreview.srcObject = stream;
+        // Request both video and audio tracks
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        videoPreview.srcObject = stream; // Display the preview with audio enabled
         videoRecorder = new MediaRecorder(stream);
         const videoChunks = [];
 
@@ -240,7 +241,7 @@ videoBtn.addEventListener("click", async () => {
         videoRecorder.onstop = async () => {
             const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             const formData = new FormData();
-            formData.append('file', videoBlob, 'video.webm');
+            formData.append('file', videoBlob, 'video_with_audio.webm');
 
             fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
