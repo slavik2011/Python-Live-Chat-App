@@ -28,6 +28,7 @@
       <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
       <button id="audio-btn" class="audio-btn">Record Audio</button>
       <button id="video-btn" class="video-btn">Record Video</button>
+      <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
       <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
   </div>
@@ -43,25 +44,25 @@
     .message-box {
         display: flex;
         flex-direction: column;
-        height: 80vh; /* Set the height to a percentage of the viewport height */
-        width: 80vw; /* Set the width to a percentage of the viewport width */
-        max-height: 90vh; /* Optional: maximum height */
-        max-width: 90vw; /* Optional: maximum width */
-        padding: 10px; /* Some padding around */
+        height: 80vh;
+        width: 80vw;
+        max-height: 90vh;
+        max-width: 90vw;
+        padding: 10px;
         box-sizing: border-box;
-        background-color: #f8f9fa; /* Optional: light background */
-        border: 1px solid #ccc; /* Optional: border */
-        resize: both; /* Allow both horizontal and vertical resizing */
-        overflow: hidden; /* Hide overflow for clean look */
+        background-color: #f8f9fa;
+        border: 1px solid #ccc;
+        resize: both;
+        overflow: hidden;
     }
 
     .messages {
-        flex: 1; /* Take up remaining space */
-        overflow-y: auto; /* Allow scrolling */
-        margin-bottom: 10px; /* Space for the input area */
-        border: 1px solid #ccc; /* Optional: border for the messages area */
-        padding: 10px; /* Padding inside the messages area */
-        background-color: white; /* Background color for the messages */
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: white;
     }
 
     .message-input { width: 70%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
@@ -101,13 +102,13 @@ const socketio = io();
 const messageInput = document.getElementById("message");
 const recordBtn = document.getElementById("audio-btn");
 const videoBtn = document.getElementById("video-btn");
+const videoPreview = document.getElementById("videoPreview");
 let mediaRecorder;
 let videoRecorder;
 let isRecording = false;
 let isVideoRecording = false;
 let pageIsActive = true;
 
-// Handle visibility for notifications
 window.onfocus = () => { pageIsActive = true; };
 window.onblur = () => { pageIsActive = false; };
 Notification.requestPermission();
@@ -116,7 +117,6 @@ const updateMembersCount = (count) => {
     document.getElementById("members").innerHTML = `${count.number} members`;
 };
 
-// Function to create messages
 const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     const messages = document.getElementById("messages");
     const messageDiv = document.createElement("div");
@@ -135,7 +135,7 @@ const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     }
 
     messages.appendChild(messageDiv);
-    messages.scrollTop = messages.scrollHeight; // Scroll to the latest message
+    messages.scrollTop = messages.scrollHeight;
 };
 
 const sendMessage = () => {
@@ -172,7 +172,6 @@ document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
 });
 
-// Handle audio recording
 recordBtn.addEventListener("click", async () => {
     if (isRecording) {
         mediaRecorder.stop();
@@ -216,17 +215,20 @@ recordBtn.addEventListener("click", async () => {
     }
 });
 
-// Handle video recording
 videoBtn.addEventListener("click", async () => {
     if (isVideoRecording) {
         videoRecorder.stop();
+        videoPreview.srcObject = null;
+        videoPreview.style.display = "none";
         return;
     }
 
     isVideoRecording = true;
+    videoPreview.style.display = "block";
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        videoPreview.srcObject = stream;
         videoRecorder = new MediaRecorder(stream);
         const videoChunks = [];
 
@@ -251,16 +253,22 @@ videoBtn.addEventListener("click", async () => {
                 .finally(() => {
                     isVideoRecording = false;
                     videoBtn.textContent = "Record Video";
+                    videoPreview.srcObject = null;
+                    videoPreview.style.display = "none";
                 });
         };
     } catch (error) {
         console.error("Error capturing video:", error);
         isVideoRecording = false;
         videoBtn.textContent = "Record Video";
+        videoPreview.style.display = "none";
     }
 });
 
-// Socket events for messages
+socketio.on("connect", () => {
+    socketio.emit("join", { room: "{{ code }}" });
+});
+
 socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type, data.timestamp, data.color);
 });
@@ -271,7 +279,7 @@ messageInput.addEventListener("keydown", (e) => {
     }
 });
 
-socketio.on("members", updateMembersCount);
+socketio.on("member_count", updateMembersCount);
 </script>
 
 </body>
