@@ -354,9 +354,9 @@ def connect(auth):
         rooms[room]["names"].append(name)
         room_last_activity[room] = time.time()  # Track last activity
         color, username = get_username_color(name)
-        if room != 'MAIN':
+        if room != 'MAIN' and rooms[room]['members'] == 1:
             system_messages = ['⚠️ WARNING ⚠️',
-                               'You created a private room. This room will be deleted in 1 hour of unactivity.',
+                               'That is private room. This room will be deleted in 1 hour of unactivity.',
                                '⚠️ WARNING ⚠️']
             for ms in system_messages:
                 content = {
