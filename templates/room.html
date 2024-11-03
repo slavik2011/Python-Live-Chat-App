@@ -180,11 +180,12 @@ recordBtn.addEventListener("click", async () => {
     isRecording = true;
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         mediaRecorder = new MediaRecorder(stream);
         const audioChunks = [];
 
         mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
         mediaRecorder.start();
 
         recordBtn.textContent = "Stop Recording";
