@@ -14,7 +14,6 @@
   <h2>Chat Room: {{ code }}</h2>
   <h3 id="members">0 members</h3>
   <div class="messages" id="messages"></div>
-  </div>
   <div class="inputs">
     <input
       type="text"
@@ -31,9 +30,8 @@
       <button id="video-btn" class="video-btn">Record Video</button>
       <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
+    <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
   </div>
-  <div id="video-preview-container" class="video-preview-container" style="display: none;">
-      <video id="videoPreview" autoplay muted style="max-width: 100%; height: auto;"></video>
 </div>
 
 <style>
@@ -104,7 +102,6 @@ const socketio = io();
 const messageInput = document.getElementById("message");
 const recordBtn = document.getElementById("audio-btn");
 const videoBtn = document.getElementById("video-btn");
-const videoPreviewContainer = document.getElementById("video-preview-container");
 const videoPreview = document.getElementById("videoPreview");
 let mediaRecorder;
 let videoRecorder;
@@ -175,16 +172,59 @@ document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
 });
 
+recordBtn.addEventListener("click", async () => {
+    if (isRecording) {
+        mediaRecorder.stop();
+        return;
+    }
+
+    isRecording = true;
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        const audioChunks = [];
+
+        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+        mediaRecorder.start();
+
+        recordBtn.textContent = "Stop Recording";
+
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'audio.wav');
+
+            fetch("/upload-file", { method: "POST", body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.fileUrl) {
+                        socketio.emit("message", { message: data.fileUrl, type: 'audio', color: 'rainbow' });
+                    }
+                })
+                .catch(error => console.error("Error uploading audio:", error))
+                .finally(() => {
+                    isRecording = false;
+                    recordBtn.textContent = "Record Audio";
+                });
+        };
+    } catch (error) {
+        console.error("Error capturing audio:", error);
+        isRecording = false;
+        recordBtn.textContent = "Record Audio";
+    }
+});
+
 videoBtn.addEventListener("click", async () => {
     if (isVideoRecording) {
         videoRecorder.stop();
         videoPreview.srcObject = null;
-        videoPreviewContainer.style.display = "none";
+        videoPreview.style.display = "none";
         return;
     }
 
     isVideoRecording = true;
-    videoPreviewContainer.style.display = "block";
+    videoPreview.style.display = "block";
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -214,14 +254,14 @@ videoBtn.addEventListener("click", async () => {
                     isVideoRecording = false;
                     videoBtn.textContent = "Record Video";
                     videoPreview.srcObject = null;
-                    videoPreviewContainer.style.display = "none";
+                    videoPreview.style.display = "none";
                 });
         };
     } catch (error) {
         console.error("Error capturing video:", error);
         isVideoRecording = false;
         videoBtn.textContent = "Record Video";
-        videoPreviewContainer.style.display = "none";
+        videoPreview.style.display = "none";
     }
 });
 
@@ -239,7 +279,7 @@ messageInput.addEventListener("keydown", (e) => {
     }
 });
 
-socketio.on("members", updateMembersCount);
+socketio.on("member_count", updateMembersCount);
 </script>
 
 </body>
