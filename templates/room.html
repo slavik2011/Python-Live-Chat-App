@@ -104,6 +104,7 @@ const socketio = io();
 const messageInput = document.getElementById("message");
 const recordBtn = document.getElementById("audio-btn");
 const videoBtn = document.getElementById("video-btn");
+const videoPreviewContainer = document.getElementById("video-preview-container");
 const videoPreview = document.getElementById("videoPreview");
 let mediaRecorder;
 let videoRecorder;
@@ -221,58 +222,6 @@ videoBtn.addEventListener("click", async () => {
         isVideoRecording = false;
         videoBtn.textContent = "Record Video";
         videoPreviewContainer.style.display = "none";
-    }
-});
-
-videoBtn.addEventListener("click", async () => {
-    if (isVideoRecording) {
-        videoRecorder.stop();
-        videoPreview.srcObject = null;
-        videoPreview.style.display = "none";
-        return;
-    }
-
-    isVideoRecording = true;
-    videoPreview.style.display = "block";
-    const messageDiv = document.createElement("div");
-    const messages = document.getElementById("messages");
-
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        videoPreview.srcObject = stream;
-        videoRecorder = new MediaRecorder(stream);
-        const videoChunks = [];
-
-        videoRecorder.ondataavailable = event => videoChunks.push(event.data);
-        videoRecorder.start();
-
-        videoBtn.textContent = "Stop Recording Video";
-
-        videoRecorder.onstop = async () => {
-            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
-            const formData = new FormData();
-            formData.append('file', videoBlob, 'video.webm');
-
-            fetch("/upload-file", { method: "POST", body: formData })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.fileUrl) {
-                        socketio.emit("message", { message: data.fileUrl, type: 'video', color: 'rainbow' });
-                    }
-                })
-                .catch(error => console.error("Error uploading video:", error))
-                .finally(() => {
-                    isVideoRecording = false;
-                    videoBtn.textContent = "Record Video";
-                    videoPreview.srcObject = null;
-                    videoPreview.style.display = "none";
-                });
-        };
-    } catch (error) {
-        console.error("Error capturing video:", error);
-        isVideoRecording = false;
-        videoBtn.textContent = "Record Video";
-        videoPreview.style.display = "none";
     }
 });
 
