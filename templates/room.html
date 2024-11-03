@@ -32,9 +32,9 @@
       <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
   </div>
+  <div id="video-preview-container" class="video-preview-container" style="display: none;">
+      <video id="videoPreview" autoplay muted style="max-width: 100%; height: auto;"></video>
 </div>
-
-<video id="videoPreview" style="display: none; max-width: 100%; height: auto; margin-top: 10px;" controls></video>
 
 <style>
     html, body {
@@ -175,42 +175,33 @@ document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
 });
 
-
-// Function to start and stop video recording
 videoBtn.addEventListener("click", async () => {
-    // Select necessary elements
-    const videoPreview = document.getElementById("videoPreview");
-    const videoBtn = document.getElementById("video-btn");
-    let videoRecorder;
-    let isVideoRecording = false;
     if (isVideoRecording) {
         videoRecorder.stop();
-        videoPreview.style.display = "none";
+        videoPreview.srcObject = null;
+        videoPreviewContainer.style.display = "none";
         return;
     }
 
     isVideoRecording = true;
-    videoPreview.style.display = "block";
-    videoPreview.srcObject = null; // Ensure it clears before starting
+    videoPreviewContainer.style.display = "block";
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoPreview.srcObject = stream;
-        videoPreview.style.display = "block";
         videoRecorder = new MediaRecorder(stream);
         const videoChunks = [];
 
         videoRecorder.ondataavailable = event => videoChunks.push(event.data);
         videoRecorder.start();
+
         videoBtn.textContent = "Stop Recording Video";
 
-        // Stop recording on button click
         videoRecorder.onstop = async () => {
             const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
             const formData = new FormData();
             formData.append('file', videoBlob, 'video.webm');
 
-            // Upload video
             fetch("/upload-file", { method: "POST", body: formData })
                 .then(response => response.json())
                 .then(data => {
@@ -222,15 +213,15 @@ videoBtn.addEventListener("click", async () => {
                 .finally(() => {
                     isVideoRecording = false;
                     videoBtn.textContent = "Record Video";
-                    videoPreview.srcObject = null; // Remove the preview stream
-                    videoPreview.style.display = "none"; // Hide preview after recording
+                    videoPreview.srcObject = null;
+                    videoPreviewContainer.style.display = "none";
                 });
         };
     } catch (error) {
         console.error("Error capturing video:", error);
         isVideoRecording = false;
         videoBtn.textContent = "Record Video";
-        videoPreview.style.display = "none";
+        videoPreviewContainer.style.display = "none";
     }
 });
 
