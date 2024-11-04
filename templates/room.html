@@ -268,12 +268,33 @@ videoBtn.addEventListener("click", async () => {
     }
 });
 
+function showNotification(title, body) {
+    if (!("Notification" in window)) {
+        console.error("This browser does not support desktop notifications");
+        return;
+    }
+    if (Notification.permission === "granted") {
+        // Create the notification with the correct title and body
+        new Notification(title, { body: body }); // Use title and body here
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === "granted") {
+                // Create the notification if permission is granted *now*
+                new Notification(title, { body: body }); // Use title and body here
+            }
+        });
+    }
+}
+
 socketio.on("connect", () => {
     socketio.emit("join", { room: "{{ code }}" });
 });
 
 socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type, data.timestamp, data.color);
+    if (!pageIsActive) {
+        showNotification(data.name, data.message);
+    }
 });
 
 messageInput.addEventListener("keydown", (e) => {
