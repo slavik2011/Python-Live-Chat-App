@@ -399,7 +399,7 @@ def disconnect():
         "message": f"{username} has left the room.",
         "type": 'text',
         "color": '#e455e2',
-        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": time.time()
     }
 
     rooms[room]["messages"].append(content)
