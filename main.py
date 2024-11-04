@@ -229,7 +229,7 @@ def message(data):
                             "message": 'Every uploaded file was deleted from the server by administrator.',
                             "type": 'text',
                             "color": '#e455e2',
-                            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            "timestamp": time.time()
                         }
                         for room in rooms.keys():
                             socketio.emit("message", content_f, room=room)
@@ -254,7 +254,7 @@ def message(data):
             "message": response,
             "type": 'text',
             "color": '#e455e2',
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": time.time()
         }
 
         join_room(h_room)
@@ -266,7 +266,7 @@ def message(data):
                 "message": data.get("message", ""),
                 "type": data.get("type", "text"),
                 "color": color,
-                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                "timestamp": time.time()
             }
             socketio.emit("message", content, room=h_room)
 
@@ -281,7 +281,7 @@ def message(data):
         "message": data.get("message", ""),
         "type": data.get("type", "text"),
         "color": color,
-        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": time.time()
     }
 
     # Check if the message is of type 'audio'
@@ -323,7 +323,7 @@ def connect(auth):
             "message": 'Enter password using /code <password> to start',
             "type": 'text',
             "color": '#e455e2',
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": time.time()
         }
 
         join_room(h_room)
@@ -356,7 +356,7 @@ def connect(auth):
         color, username = get_username_color(name)
         if room != 'MAIN' and rooms[room]['members'] == 1:
             system_messages = ['⚠️ WARNING ⚠️',
-                               'That is private room. This room will be deleted in 1 hour of unactivity.',
+                               'This is private room. This room will be deleted in 1 hour of unactivity.',
                                '⚠️ WARNING ⚠️']
             for ms in system_messages:
                 content = {
@@ -364,7 +364,7 @@ def connect(auth):
                     "message": ms,
                     "type": 'text',
                     "color": '#e455e2',
-                    "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "timestamp": time.time()
                 }
 
                 rooms[room]["messages"].append(content)
@@ -382,7 +382,7 @@ def connect(auth):
             "message": f"{username} has joined the room.",
             "type": 'text',
             "color": '#e455e2',
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "timestamp": time.time()
         }
 
         rooms[room]["messages"].append(content)
