@@ -123,14 +123,16 @@ const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
     const nameColor = color !== 'rainbow' ? `color: ${color};` : '';
 
+    const correctedTime = new Date(timestamp * 1000).toLocaleString("en-GB", {dateStyle: 'short', timeStyle: 'medium'})
+
     if (type === 'text') {
-        messageDiv.innerHTML = `<strong class="${nameStyle}" style="${nameColor}">${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span>`;
+        messageDiv.innerHTML = `<strong class="${nameStyle}" style="${nameColor}">${name}</strong>: ${msg}<span class="muted">${correctedTime}</span>`;
     } else if (type === 'image' || type === 'audio' || type === 'video') {
         messageDiv.innerHTML = `<strong class="${nameStyle}" style="${nameColor}">${name}</strong>: <br>`;
         if (type === 'image') messageDiv.innerHTML += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
         else if (type === 'video') messageDiv.innerHTML += `<video src="${msg}" controls style="max-width: 100%; height: auto;"></video>`;
         else messageDiv.innerHTML += `<audio controls src="${msg}"></audio>`;
-        messageDiv.innerHTML += `<span class="muted">${timestamp}</span>`;
+        messageDiv.innerHTML += `<span class="muted">${correctedTime}</span>`;
     }
 
     messages.appendChild(messageDiv);
