@@ -296,11 +296,14 @@ def message(data):
         # The message should contain the audio file URL
         content["message"] = data.get("message")  # This should be the URL sent from the client
 
+    dangerous_things = ['<html>', '<title>', '<body>', '<title>', '<!DOCTYPE HTML>', '<script>']
+
     # Other security checks...
-    if "<" in content["message"] and ">" in content["message"]:
-        content["message"] = "Warning: Attempted code execution!"
-        content["name"] = "Security"
-        content['color'] = '#e455e2'
+    for dang in dangerous_things:
+        if dang in content['message']:
+            content["message"] = "Warning: Attempted code execution!"
+            content["name"] = "Security"
+            content['color'] = '#e455e2'
 
     if not safe:
         rooms[room]["messages"].append(content)
