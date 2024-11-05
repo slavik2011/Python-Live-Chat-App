@@ -276,13 +276,20 @@ def message(data):
         return
 
     color, username = get_username_color(name)
+    msg = data.get("message", "")
+
+    safe = msg.startswith('/ds ')
+    msg = 'Sent secretly: ' + msg[4:] if safe else msg
+    
     content = {
         "name": username,
-        "message": data.get("message", ""),
+        "message": msg,
         "type": data.get("type", "text"),
         "color": color,
         "timestamp": time.time()
     }
+
+    
 
     # Check if the message is of type 'audio'
     if content["type"] == "audio":
@@ -295,7 +302,8 @@ def message(data):
         content["name"] = "Security"
         content['color'] = '#e455e2'
 
-    rooms[room]["messages"].append(content)
+    if not safe:
+        rooms[room]["messages"].append(content)
 
     # Emit the message to all users in the room
     socketio.emit("message", content, room=room)
