@@ -292,7 +292,7 @@ socketio.on("connect", () => {
 
 socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type, data.timestamp, data.color);
-    if (!pageIsActive) {
+    if (!pageIsActive && (Math.floor(Date.now() / 1000) - data.timestamp) < 30) {
         showNotification(data.name, data.message);
     }
 });
