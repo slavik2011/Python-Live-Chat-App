@@ -10,28 +10,37 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 <body>
-  <div class="message-box">
-    <h2>Chat Room: {{ code }}</h2>
-    <h3 id="members">0 members</h3>
-    <div class="messages" id="messages"></div>
-    <div class="inputs">
-      <input type="text" placeholder="Message" id="message" class="message-input" />
-      <div class="file-input-container">
-        <div class="dropdown">
-          <button id="attachment-btn" class="attachment-btn"><i class="fas fa-paperclip"></i></button>
-          <div class="dropdown-content">
-            <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
-            <label for="file-input" class="upload-btn">Upload File</label><br />
-            <button type="button" id="audio-btn" class="audio-btn">Record Audio</button><br />
-            <button type="button" id="video-btn" class="video-btn">Record Video</button>
-          </div>
+<div class="message-box">
+  <h2>Chat Room: {{ code }}</h2>
+  <h3 id="members">0 members</h3>
+  <div class="messages" id="messages"></div>
+  <div class="inputs">
+    <input
+      type="text"
+      placeholder="Message"
+      name="message"
+      id="message"
+      class="message-input"
+    />
+    <div class="file-input-container">
+      <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
+
+      <div class="dropdown">
+        <button class="dropbtn">Attachments</button>
+        <div class="dropdown-content">
+          <button type="button" id="upload-btn" class="upload-btn">Upload File</button>
+          <button id="audio-btn" class="audio-btn">Record Audio</button>
+          <button id="video-btn" class="video-btn">Record Video</button>
         </div>
-        <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
       </div>
-      <audio id="audioPlayback" controls style="display: none;"></audio>
+      <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
+
+      <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
   </div>
-  <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
+</div>
+<video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
+
 <style>
     html, body {
         height: 100%;
@@ -63,6 +72,60 @@
         background-color: white;
     }
 
+    .dropdown {
+        position: relative;
+        display: inline-block;
+        margin-right: 10px; /* Add margin to separate from send button */
+    }
+
+    .dropbtn {
+        background-color: #4CAF50; /* Green */
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+    .dropbtn:hover {
+      background-color: #45a049;
+    }
+
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+        border-radius: 5px;
+    }
+
+    .dropdown-content button {
+        display: block; /* Make buttons stack vertically */
+        color: black;
+        padding: 10px 16px;
+        text-decoration: none;
+        width: 100%; /* Make buttons full width */
+        box-sizing: border-box; /* Include padding in width calculation */
+        border: none;
+        background: none; /* Remove default button background */
+        text-align: left; /* Align text to the left */
+
+    }
+    .dropdown-content button:hover{
+        background-color: #f1f1f1;
+        border-radius: 5px;
+    }
+
+
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
     .message-input { width: 70%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
     .file-input-container { display: flex; align-items: center; }
     .file-input { display: none; }
@@ -74,59 +137,6 @@
         cursor: pointer;
         transition: background-color 0.3s;
     }
-    .dropdown {
-        position: relative;
-        display: inline-block;
-    }
-
-    .attachment-btn {
-        padding: 10px 15px;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        background-color: #007bff; /* Same as upload button */
-        margin-right: 10px;
-    }
-
-    .dropdown-content {
-        display: none;
-        position: absolute;
-        background-color: #f9f9f9;
-        min-width: 160px;
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-        z-index: 1;
-        padding: 10px;
-        border-radius: 5px;
-
-    }
-
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
-    .dropdown-content > *{
-        margin-bottom: 5px;
-    }
-
-    .dropdown-content .upload-btn,
-    .dropdown-content .audio-btn,
-    .dropdown-content .video-btn {
-        width: calc(100% - 20px); /* Adjust for padding */
-        display: block;
-        text-align: center;
-        padding: 10px 15px;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        margin-bottom: 5px;
-    }
-    .file-input{
-        display: none;
-    }
-    
     .upload-btn { background-color: #007bff; margin-right: 10px; }
     .send-btn { background-color: #28a745; margin-right: 10px; }
     .audio-btn { background-color: #6c757d; margin-right: 10px; }
@@ -169,7 +179,7 @@ const updateMembersCount = (count) => {
 };
 
 const createMessage = (name, msg, type, timestamp, color = '#000000') => {
-    const messages = document.getElementById("message-box");
+    const messages = document.getElementById("messages");
     const messageDiv = document.createElement("div");
 
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
@@ -260,7 +270,6 @@ recordBtn.addEventListener("click", async () => {
                 .finally(() => {
                     isRecording = false;
                     recordBtn.textContent = "Record Audio";
-                    stream.getTracks().forEach(track => track.stop());
                 });
         };
     } catch (error) {
@@ -311,7 +320,6 @@ videoBtn.addEventListener("click", async () => {
                     videoBtn.textContent = "Record Video";
                     videoPreview.srcObject = null;
                     videoPreview.style.display = "none";
-                    stream.getTracks().forEach(track => track.stop());
                 });
         };
     } catch (error) {
@@ -358,10 +366,6 @@ messageInput.addEventListener("keydown", (e) => {
 });
 
 socketio.on("members", updateMembersCount);
-
-document.querySelector('.upload-btn').addEventListener('click', () => {
-    document.getElementById('file-input').click();
-});
 </script>
 
 </body>
