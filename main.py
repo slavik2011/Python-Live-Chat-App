@@ -122,7 +122,7 @@ def home():
 
 # Creating main room
 room = 'MAIN'
-rooms[room] = {"members": 0, "messages": [], "names": []}
+rooms[room] = {"members": 0, "messages": [], "names": [], "secrets": {}}
 
 
 @app.route("/room")
@@ -297,10 +297,10 @@ def message(data):
     msg = 'Sent secretly: ' + msg[4:] if safe else msg
 
     direct = msg.startswith('/ls ')
-    msg = 'Sent secretly for you: ' + msg[4:] if direct else msg
     if direct:
         msg_list = msg.split()
-        usertgmsg = msg_list[0]
+        usertgmsg = msg_list[1]
+    msg = 'Sent secretly for you: ' + msg[4:] if direct else msg
         
     content = {
         "name": username,
