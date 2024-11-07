@@ -150,9 +150,19 @@ def upload_file():
         print(f"Saving file to {file_path}")  # Debugging statement
         file.save(file_path)
 
-        file_type = 'audio' if filename.endswith('.wav') or filename.endswith('.mp3') else 'image'
+        if filename.endswith('.wav') or filename.endswith('.mp3'):
+            file_type = 'audio'
+        elif filename.endswith('.mov') or filename.endswith('.mp4'):
+            file_type = 'video'
+        else:
+            file_type = 'image'
         file_url = f"/uploads/{filename}"
 
+        if file_type == 'video':
+            compress_video(file_path)
+        elif file_type == 'image':
+            compress_image(file_path)
+        
         return jsonify({'fileUrl': file_url, 'fileType': file_type})
 
     return jsonify({"error": "Invalid file type"}), 400
