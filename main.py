@@ -326,7 +326,7 @@ def message(data):
             content["name"] = "Security"
             content['color'] = '#e455e2'
 
-    if not safe:
+    if not safe and not direct: # FATAL fixed (1)
         rooms[room]["messages"].append(content)
 
     # Emit the message to all users in the room
