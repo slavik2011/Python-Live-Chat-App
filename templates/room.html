@@ -10,28 +10,30 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 <body>
-  <div class="message-box">
-    <h2>Chat Room: {{ code }}</h2>
-    <h3 id="members">0 members</h3>
-    <div class="messages" id="messages"></div>
-    <div class="inputs">
-      <input type="text" placeholder="Message" name="message" id="message" class="message-input" />
-      <div class="file-input-container">
-        <div class="dropdown">
-          <button id="attachment-btn" class="attachment-btn"><i class="fas fa-paperclip"></i></button>
-          <div class="dropdown-content" id="dropdown-content">
-            <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
-            <label for="file-input" class="upload-btn">Upload File</label><br />
-            <button type="button" id="audio-btn" class="audio-btn">Record Audio</button><br />
-            <button type="button" id="video-btn" class="video-btn">Record Video</button>
-          </div>
+  <body>
+    <div class="message-box">
+        <h2>Chat Room: {{ code }}</h2>
+        <h3 id="members">0 members</h3>
+        <div class="messages" id="messages"></div>
+        <div class="inputs">
+            <input type="text" placeholder="Message" id="message" class="message-input"/>
+            <div class="file-input-container">
+                <div class="dropdown">
+                    <button id="attachment-btn" class="attachment-btn"><i class="fas fa-paperclip"></i></button>
+                    <div class="dropdown-content">
+                        <input type="file" id="file-input" accept="image/*,video/*" class="file-input"/>
+                        <label for="file-input" class="upload-btn">Upload File</label><br>
+                        <button type="button" id="audio-btn" class="audio-btn">Record Audio</button><br>
+                        <button type="button" id="video-btn" class="video-btn">Record Video</button>
+                    </div>
+                </div>
+                <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
+            </div>
+            <audio id="audioPlayback" controls style="display:none;"></audio>
         </div>
-        <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
-      </div>
-      <audio id="audioPlayback" controls style="display: none;"></audio>
     </div>
-  </div>
-  <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
+    <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
+    </div>
     
 <style>
     html, body {
