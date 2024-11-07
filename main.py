@@ -152,14 +152,18 @@ def upload_file():
 
         if filename.endswith('.wav') or filename.endswith('.mp3'):
             file_type = 'audio'
-        elif filename.endswith('.mov') or filename.endswith('.mp4'):
+        elif filename.endswith('.mov') or filename.endswith('.mp4') or filename.endswith('.webm'):
             file_type = 'video'
         else:
             file_type = 'image'
         file_url = f"/uploads/{filename}"
 
         if file_type == 'video':
-            compress_video(file_path)
+            if filename.endswith('.webm'):
+                try:
+                    compress_video(file_path)
+                except:
+                    compress_image(file_path)
         elif file_type == 'image':
             compress_image(file_path)
         
