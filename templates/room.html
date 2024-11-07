@@ -15,24 +15,23 @@
   <h3 id="members">0 members</h3>
   <div class="messages" id="messages"></div>
   <div class="inputs">
-    <input
-      type="text"
-      placeholder="Message"
-      name="message"
-      id="message"
-      class="message-input"
-    />
+    <input type="text" placeholder="Message" name="message" id="message" class="message-input"/>
     <div class="file-input-container">
-      <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
-      <button type="button" id="upload-btn" class="upload-btn">Upload File</button>
+      <div class="dropdown">
+        <button id="attachment-btn" class="attachment-btn"><i class="fas fa-paperclip"></i></button> <div class="dropdown-content" id="dropdown-content">
+           <input type="file" id="file-input" accept="image/*,video/*" class="file-input"/>
+           <label for="file-input" class="upload-btn">Upload File</label><br>
+           <button type="button" id="audio-btn" class="audio-btn">Record Audio</button><br>
+           <button type="button" id="video-btn" class="video-btn">Record Video</button>
+        </div>
+      </div>
       <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
-      <button id="audio-btn" class="audio-btn">Record Audio</button>
-      <button id="video-btn" class="video-btn">Record Video</button>
       <audio id="audioPlayback" controls style="display:none;"></audio>
+      </div>
     </div>
-  </div>
 </div>
 <video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
+
 <style>
     html, body {
         height: 100%;
@@ -75,6 +74,59 @@
         cursor: pointer;
         transition: background-color 0.3s;
     }
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .attachment-btn {
+        padding: 10px 15px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        background-color: #007bff; /* Same as upload button */
+        margin-right: 10px;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+        padding: 10px;
+        border-radius: 5px;
+
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    .dropdown-content > *{
+        margin-bottom: 5px;
+    }
+
+    .dropdown-content .upload-btn,
+    .dropdown-content .audio-btn,
+    .dropdown-content .video-btn {
+        width: calc(100% - 20px); /* Adjust for padding */
+        display: block;
+        text-align: center;
+        padding: 10px 15px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-bottom: 5px;
+    }
+    .file-input{
+        display: none;
+    }
+    
     .upload-btn { background-color: #007bff; margin-right: 10px; }
     .send-btn { background-color: #28a745; margin-right: 10px; }
     .audio-btn { background-color: #6c757d; margin-right: 10px; }
@@ -208,6 +260,7 @@ recordBtn.addEventListener("click", async () => {
                 .finally(() => {
                     isRecording = false;
                     recordBtn.textContent = "Record Audio";
+                    stream.getTracks().forEach(track => track.stop());
                 });
         };
     } catch (error) {
@@ -258,6 +311,7 @@ videoBtn.addEventListener("click", async () => {
                     videoBtn.textContent = "Record Video";
                     videoPreview.srcObject = null;
                     videoPreview.style.display = "none";
+                    stream.getTracks().forEach(track => track.stop());
                 });
         };
     } catch (error) {
@@ -304,6 +358,10 @@ messageInput.addEventListener("keydown", (e) => {
 });
 
 socketio.on("members", updateMembersCount);
+
+document.querySelector('.upload-btn').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+});
 </script>
 
 </body>
