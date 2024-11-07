@@ -272,6 +272,7 @@ recordBtn.addEventListener("click", async () => {
                 .finally(() => {
                     isRecording = false;
                     recordBtn.textContent = "Record Audio";
+                    stream.getTracks().forEach(track => track.stop());
                 });
         };
     } catch (error) {
@@ -322,6 +323,7 @@ videoBtn.addEventListener("click", async () => {
                     videoBtn.textContent = "Record Video";
                     videoPreview.srcObject = null;
                     videoPreview.style.display = "none";
+                    stream.getTracks().forEach(track => track.stop());
                 });
         };
     } catch (error) {
