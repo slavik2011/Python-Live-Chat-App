@@ -154,13 +154,9 @@
 <script type="text/javascript">
 const socketio = io();
 const messageInput = document.getElementById("message");
-const messageBox = document.getElementById("message-box");
-const inputs = messageBox.getElementById("inputs");
-const fileBox = inputs.getElementById("file-input-container");
-const dropdown = fileBox.getElementById("dropdown");
-const recordBtn = dropdown.getElementById("audio-btn");
-const videoBtn = dropdown.getElementById("video-btn");
-const videoPreview = dropdown.getElementById("videoPreview");
+const recordBtn = document.getElementById("audio-btn");
+const videoBtn = document.getElementById("video-btn");
+const videoPreview = document.getElementById("videoPreview");
 let mediaRecorder;
 let videoRecorder;
 let isRecording = false;
