@@ -108,7 +108,7 @@ def home():
         room = code
         if create != False:
             room = generate_unique_code(6)
-            rooms[room] = {"members": 0, "names": [], "messages": []}
+            rooms[room] = {"members": 0, "names": [], "messages": [], "secrets": {}}
             room_last_activity[room] = time.time()  # Track creation time for activity
         elif code not in rooms and room != 'ADMIN':
             return render_template("home.html", error="Room does not exist.", code=code, name=name)
@@ -295,7 +295,13 @@ def message(data):
 
     safe = msg.startswith('/ds ')
     msg = 'Sent secretly: ' + msg[4:] if safe else msg
-    
+
+    direct = msg.startswith('/ls ')
+    msg = 'Sent secretly for you: ' + msg[4:] if direct else msg
+    if direct:
+        msg_list = msg.split()
+        usertgmsg = msg_list[0]
+        
     content = {
         "name": username,
         "message": msg,
@@ -324,7 +330,7 @@ def message(data):
         rooms[room]["messages"].append(content)
 
     # Emit the message to all users in the room
-    socketio.emit("message", content, room=room)
+    socketio.emit("message", content, room=rooms[room]['secrets'][usertgmsg] if direct else room)
 
 
 @socketio.on("connect")
@@ -362,12 +368,14 @@ def connect(auth):
         if room not in rooms:
             leave_room(room)
             return
-        '''if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
+        if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
             rooms[room]["members"] -= 1
             leave_room(room)
-            return'''
+            return
 
         h_room = str(random.randint(1, 10000000))
+
+        rooms[room]['secrets'].update({name: h_room})
 
         join_room(h_room)
 
@@ -419,6 +427,7 @@ def connect(auth):
 @socketio.on("disconnect")
 def disconnect():
     room = session.get("room")
+    name = session.get("name")
     color, username = get_username_color(session.get("name"))
     content = {
         "name": 'System',
@@ -429,6 +438,8 @@ def disconnect():
     }
 
     rooms[room]["messages"].append(content)
+    rooms[room]["names"].remove(name)
+    del rooms[room]["secrets"][name]
 
     socketio.emit("message", content, room=room)
     if room in rooms:
