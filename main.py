@@ -300,7 +300,7 @@ def message(data):
     if direct:
         msg_list = msg.split()
         usertgmsg = msg_list[1]
-    msg = 'Sent secretly for you: ' + msg[4:] if direct else msg
+    msg = 'Sent secretly for you: ' + ' '.join(msg_list[2:]) if direct else msg
         
     content = {
         "name": username,
@@ -339,6 +339,7 @@ def connect(auth):
     time.sleep(1)
     room = session.get("room")
     name = session.get("name")
+    color, username = get_username_color(name)
     print(room, flush=True)
 
     if room == 'ADMIN':
@@ -368,14 +369,18 @@ def connect(auth):
         if room not in rooms:
             leave_room(room)
             return
-        if not rooms[room]["members"] == 1 and name in rooms[room]["names"] :
+        if not rooms[room]["members"] == 1 and username in rooms[room]["names"]:
+            rooms[room]["members"] -= 1
+            leave_room(room)
+            return
+        elif ' ' in username:
             rooms[room]["members"] -= 1
             leave_room(room)
             return
 
         h_room = str(random.randint(1, 10000000))
 
-        rooms[room]['secrets'].update({name: h_room})
+        rooms[room]['secrets'].update({username: h_room})
 
         join_room(h_room)
 
@@ -385,7 +390,7 @@ def connect(auth):
         time.sleep(1)
 
         join_room(room)
-        rooms[room]["names"].append(name)
+        rooms[room]["names"].append(username)
         room_last_activity[room] = time.time()  # Track last activity
         color, username = get_username_color(name)
         if room != 'MAIN' and rooms[room]['members'] == 1:
@@ -438,8 +443,8 @@ def disconnect():
     }
 
     rooms[room]["messages"].append(content)
-    rooms[room]["names"].remove(name)
-    del rooms[room]["secrets"][name]
+    rooms[room]["names"].remove(username)
+    del rooms[room]["secrets"][username]
 
     socketio.emit("message", content, room=room)
     if room in rooms:
