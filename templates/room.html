@@ -6,163 +6,190 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Room</title>
-    <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
 </head>
 <body>
-<div class="message-box">
-  <h2>Chat Room: {{ code }}</h2>
-  <h3 id="members">0 members</h3>
-  <div class="messages" id="messages"></div>
-  <div class="inputs">
+<input type="file" id="file-input" style="display: none;">
+<div id="chat-container" class="chat-room">
+  <div id="header" class="header">
+    <h2>Chat room: {{ code }}</h2>
+    <h3 id="members-info" class="members-info">Joining your room...</h3>
+  </div>
+  <div id="messages" class="messages"></div>
+  <div id="input-container" class="input-area">
     <input
       type="text"
-      placeholder="Message"
+      placeholder="Type your message..."
       name="message"
-      id="message"
+      id="message-input"
       class="message-input"
     />
-    <div class="file-input-container">
-      <input type="file" id="file-input" accept="image/*,video/*" class="file-input" />
-
-      <div class="dropdown">
-        <button class="dropbtn">Attachments</button>
-        <div class="dropdown-content">
-          <button type="button" id="upload-btn" class="upload-btn">Upload File</button>
+    <div id="file-options" class="file-options">
+      <div id="dropdown" class="dropdown">
+        <button id="dropdown-btn" class="dropdown-btn">Attachments ▼</button>
+        <div id="dropdown-content" class="dropdown-content">
+          <button id="upload-btn" type="button" class="upload-btn">Upload File</button>
           <button id="audio-btn" class="audio-btn">Record Audio</button>
           <button id="video-btn" class="video-btn">Record Video</button>
         </div>
       </div>
-      <button type="button" id="send-btn" onclick="sendMessage()" class="send-btn">Send</button>
-
-      <audio id="audioPlayback" controls style="display:none;"></audio>
     </div>
+    <button id="send-btn" type="button" class="send-btn" onclick="sendMessage()">Send</button>
   </div>
 </div>
-<video id="videoPreview" style="display: none; max-width: 100%; height: auto;" autoplay muted></video>
 
 <style>
-    html, body {
-        height: 100%;
+    /* Layout styles */
+    body, html {
         margin: 0;
         padding: 0;
+        font-family: Arial, sans-serif;
     }
 
-    .message-box {
+    #members-info {
+        color: #777777;
+        font-size: 15px;
+    }
+
+    #chat-container {
+        width: 100vw;
+        height: 100vh;
         display: flex;
         flex-direction: column;
-        height: 95vh;
-        width: 95vw;
-        max-height: 98vh;
-        max-width: 98vw;
-        padding: 10px;
         box-sizing: border-box;
-        background-color: #f8f9fa;
-        border: 1px solid #ccc;
-        resize: both;
-        overflow: hidden;
     }
 
-    .messages {
-        flex: 1;
-        overflow-y: auto;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
+    #header {
+        display: flex;
+        justify-content: space-between;
         padding: 10px;
-        background-color: white;
+        background-color: #fff;
+        border-bottom: 1px solid #ccc;
+        height: 5%;
     }
 
-    .dropdown {
+    #members-info {
+        font-size: 15px;
+    }
+
+    /* Message container */
+    #messages {
+        flex: 1;
+        padding: 10px;
+        background-color: #f8f8f8;
+        overflow-y: auto;
+    }
+
+    /* Message bubble */
+    .message-bubble {
+        display: inline-block;
+        position: relative;
+        background-color: #fff;
+        padding: 10px;
+        border: 1px solid #000;
+        border-radius: 8px;
+        margin: 10px 0;
+        max-width: 70%;
+    }
+
+    .message-bubble::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: -10px;
+        width: 0;
+        height: 0;
+        border-right: 10px solid #000;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+    }
+
+    /* Message sender and timestamp */
+    .message-sender {
+        font-weight: bold;
+    }
+
+    .message-timestamp {
+        display: block;
+        font-size: 0.75em;
+        color: #777;
+    }
+
+    /* Input area styles */
+    #input-container {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background-color: #fff;
+        border-top: 1px solid #ccc;
+    }
+
+    #message-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+
+        /* Dropdown for attachments */
+    #dropdown {
         position: relative;
         display: inline-block;
-        margin-right: 10px; /* Add margin to separate from send button */
+        margin-right: 10px;
     }
 
-    .dropbtn {
-        background-color: #4CAF50; /* Green */
+    #dropdown-btn {
+        background-color: #4CAF50;
         color: white;
-        padding: 10px 15px;
+        padding: 10px;
         border: none;
+        border-radius: 4px;
         cursor: pointer;
-        border-radius: 5px;
-        transition: background-color 0.3s;
     }
 
-    .dropbtn:hover {
-      background-color: #45a049;
-    }
-
-
-    .dropdown-content {
+    #dropdown-content {
         display: none;
         position: absolute;
-        bottom: 100%; /* Position below the button */
-        left: 0;        /* Align left with the button */
-        background-color: #f9f9f9;
-        min-width: 160px;
+        bottom: 100%;
+        left: 0;
+        background-color: #f9f9f9; /* Light background for dropdown */
         box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
         z-index: 1;
-        border-radius: 5px;
     }
 
     .dropdown-content button {
         display: block; /* Make buttons stack vertically */
         color: black;
-        padding: 10px 16px;
         text-decoration: none;
         width: 100%; /* Make buttons full width */
         box-sizing: border-box; /* Include padding in width calculation */
         border: none;
         background: none; /* Remove default button background */
         text-align: left; /* Align text to the left */
-
-    }
-    .dropdown-content button:hover{
-        background-color: #f1f1f1;
-        border-radius: 5px;
     }
 
+    #dropdown-content button:hover {
+        background-color: #45a049; /* Darker green on hover */
+    }
 
-
-    .dropdown:hover .dropdown-content {
+    #dropdown:hover #dropdown-content {
         display: block;
     }
-
-    .message-input { width: 70%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-right: 10px; }
-    .file-input-container { display: flex; align-items: center; }
-    .file-input { display: none; }
-    .upload-btn, .send-btn, .audio-btn, .video-btn {
+    /* Send and file buttons */
+    #send-btn, #file-btn {
         padding: 10px 15px;
+        background-color: #28a745;
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 4px;
         cursor: pointer;
-        transition: background-color 0.3s;
-    }
-    .upload-btn { background-color: #007bff; margin-right: 10px; }
-    .send-btn { background-color: #28a745; margin-right: 10px; }
-    .audio-btn { background-color: #6c757d; margin-right: 10px; }
-    .video-btn { background-color: #ff5722; }
-    .upload-btn:hover { background-color: #0056b3; }
-    .send-btn:hover { background-color: #218838; }
-    .audio-btn:hover { background-color: #5a6268; }
-    .video-btn:hover { background-color: #e64a19; }
-    .send-btn:disabled { background-color: #ccc; cursor: not-allowed; }
-    .rainbow-text {
-        background-image: linear-gradient(90deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #8B00FF);
-        -webkit-background-clip: text;
-        color: transparent;
-        animation: rainbow 1.5s linear infinite;
-    }
-    @keyframes rainbow {
-        from { background-position: 0%; }
-        to { background-position: 100%; }
     }
 </style>
 
 <script type="text/javascript">
 const socketio = io();
-const messageInput = document.getElementById("message");
+const messageInput = document.getElementById("message-input");
 const recordBtn = document.getElementById("audio-btn");
 const videoBtn = document.getElementById("video-btn");
 const videoPreview = document.getElementById("videoPreview");
@@ -176,10 +203,6 @@ window.onfocus = () => { pageIsActive = true; };
 window.onblur = () => { pageIsActive = false; };
 Notification.requestPermission();
 
-const updateMembersCount = (count) => {
-    document.getElementById("members").innerHTML = `${count.number} members`;
-};
-
 const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     const messages = document.getElementById("messages");
     const messageDiv = document.createElement("div");
@@ -187,16 +210,14 @@ const createMessage = (name, msg, type, timestamp, color = '#000000') => {
     const nameStyle = color === 'rainbow' ? 'rainbow-text' : '';
     const nameColor = color !== 'rainbow' ? `color: ${color};` : '';
 
-    const correctedTime = new Date(timestamp * 1000).toLocaleString("en-GB", {dateStyle: 'short', timeStyle: 'medium'})
-
     if (type === 'text') {
-        messageDiv.innerHTML = `<strong class="${nameStyle}" style="${nameColor}">${name}</strong>: ${msg}<span class="muted">${correctedTime}</span>`;
+        messageDiv.innerHTML = `<strong class="${nameStyle}" style="${nameColor}">${name}</strong>: ${msg}<span class="muted">${new Date().toLocaleString()}</span>`;
     } else if (type === 'image' || type === 'audio' || type === 'video') {
         messageDiv.innerHTML = `<strong class="${nameStyle}" style="${nameColor}">${name}</strong>: <br>`;
         if (type === 'image') messageDiv.innerHTML += `<img src="${msg}" alt="Image" style="max-width: 100%; height: auto;" />`;
         else if (type === 'video') messageDiv.innerHTML += `<video src="${msg}" controls style="max-width: 100%; height: auto;"></video>`;
         else messageDiv.innerHTML += `<audio controls src="${msg}"></audio>`;
-        messageDiv.innerHTML += `<span class="muted">${correctedTime}</span>`;
+        messageDiv.innerHTML += `<span class="muted">${timestamp}</span>`;
     }
 
     messages.appendChild(messageDiv);
@@ -232,6 +253,29 @@ const sendMessage = () => {
         fileInput.value = "";
     }
 };
+
+function showNotification(title, body) {
+    if (!("Notification" in window)) {
+        console.error("This browser does not support desktop notifications");
+        return;
+    }
+    if (Notification.permission === "granted") {
+        // Create the notification with the correct title and body
+        new Notification(title, { body: body }); // Use title and body here
+    } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === "granted") {
+                // Create the notification if permission is granted *now*
+                new Notification(title, { body: body }); // Use title and body here
+            }
+        });
+    }
+}
+
+const updateMembersCount = (count) => {
+    document.getElementById("members-info").innerHTML = `${count.number} members online`;
+};
+
 
 document.getElementById("upload-btn").addEventListener("click", () => {
     document.getElementById("file-input").click();
@@ -334,38 +378,24 @@ videoBtn.addEventListener("click", async () => {
     }
 });
 
-function showNotification(title, body) {
-    if (!("Notification" in window)) {
-        console.error("This browser does not support desktop notifications");
-        return;
-    }
-    if (Notification.permission === "granted") {
-        // Create the notification with the correct title and body
-        new Notification(title, { body: body }); // Use title and body here
-    } else if (Notification.permission !== "denied") {
-        Notification.requestPermission().then(function(permission) {
-            if (permission === "granted") {
-                // Create the notification if permission is granted *now*
-                new Notification(title, { body: body }); // Use title and body here
-            }
-        });
-    }
-}
-
 socketio.on("connect", () => {
     socketio.emit("join", { room: "{{ code }}" });
 });
 
 socketio.on("message", (data) => {
     createMessage(data.name, data.message, data.type, data.timestamp, data.color);
-    if (!pageIsActive && (Math.floor(Date.now() / 1000) - data.timestamp) < 30) {
-        showNotification(data.name, data.message);
-    }
 });
 
 messageInput.addEventListener("keydown", (e) => {
     if (e.code === "Enter" && !messageInput.disabled) {
         sendMessage();
+    }
+});
+
+socketio.on("message", (data) => {
+    createMessage(data.name, data.message, data.type, data.timestamp, data.color);
+    if (!pageIsActive && (Math.floor(Date.now() / 1000) - data.timestamp) < 30) {
+        showNotification(data.name, data.message);
     }
 });
 
