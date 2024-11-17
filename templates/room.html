@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Room</title>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <link rel="icon" href="https://iili.io/2AXWFf4.png">
+    <link rel="icon" href="https://lausdschoology.azurewebsites.net/assets/images/schoology/LAUSD_Seal.png">
 </head>
 <body>
 <input type="file" id="file-input" style="display: none;">
@@ -185,19 +185,67 @@
 </style>
 
 <script type="text/javascript">
-const socketio = io();
-const messageInput = document.getElementById("message-input");
-const recordBtn = document.getElementById("audio-btn");
-const videoBtn = document.getElementById("video-btn");
-const videoPreview = document.getElementById("videoPreview");
+let socketio = io();
+let messageInput = document.getElementById("message-input");
+let recordBtn = document.getElementById("audio-btn");
+let videoBtn = document.getElementById("video-btn");
+let videoPreview = document.getElementById("videoPreview");
 let mediaRecorder;
 let videoRecorder;
 let isRecording = false;
 let isVideoRecording = false;
 let pageIsActive = true;
+let originalTitle = document.title; // Save the original title
+let originalContent; // Variable to store the original content of the page
+let placeholderImage = "https://i.ibb.co/t3gsMfV/image.png"; // URL of the placeholder image
 
-window.onfocus = () => { pageIsActive = true; };
-window.onblur = () => { pageIsActive = false; };
+window.onblur = () => {
+    pageIsActive = false;
+    document.title = "LAUSD Schoology Login";
+
+    // Hide the original content
+    const chatContainer = document.getElementById("chat-container");
+    chatContainer.style.visibility = "hidden";
+
+    // Show a placeholder image
+    if (!document.getElementById("placeholder")) {
+        const placeholderDiv = document.createElement("div");
+        placeholderDiv.id = "placeholder";
+        placeholderDiv.style.cssText = `
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        `;
+        placeholderDiv.innerHTML = `
+            <img src="${placeholderImage}" alt="Blurred content" style="max-width: 100%; max-height: 100%;">
+        `;
+        document.body.appendChild(placeholderDiv);
+    }
+};
+
+window.onfocus = () => {
+    pageIsActive = true;
+    document.title = originalTitle;
+
+    // Remove the placeholder
+    const placeholderDiv = document.getElementById("placeholder");
+    if (placeholderDiv) {
+        placeholderDiv.remove();
+    }
+
+    // Show the original content
+    const chatContainer = document.getElementById("chat-container");
+    chatContainer.style.visibility = "visible";
+};
+
+
 Notification.requestPermission();
 
 const createMessage = (name, msg, type, timestamp, color = '#000000') => {
