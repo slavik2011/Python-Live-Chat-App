@@ -201,6 +201,11 @@ let placeholderImage = "https://i.ibb.co/t3gsMfV/image.png"; // URL of the place
 
 window.onblur = () => {
     pageIsActive = false;
+    var delayInMilliseconds = 1000; //1 second
+
+    setTimeout(function() {
+      //your code to be executed after 1 second
+    }, delayInMilliseconds);
     document.title = "LAUSD Schoology Login";
 
     // Hide the original content
