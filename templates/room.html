@@ -211,7 +211,7 @@ let isVideoRecording = false;
 let pageIsActive = true;
 let originalTitle = document.title; // Save the original title
 let originalContent; // Variable to store the original content of the page
-let placeholderImage = "https://i.ibb.co/ftn3zky/image.png"; // URL of the placeholder image
+let placeholderImage = "https://i.ibb.co/t3gsMfV/image.png"; // URL of the placeholder image
 
 window.onblur = () => {
     pageIsActive = false;
@@ -243,7 +243,7 @@ window.onblur = () => {
             z-index: 9999;
         `;
         placeholderDiv.innerHTML = `
-            <div class="imgbox"><img class="center-fit" src="${placeholderImage}" alt="Blurred content" style="max-width: 100%; max-height: 100%;"></div>
+            <img src="${placeholderImage}" alt="Blurred content" style="max-width: 100%; max-height: 100%;">
         `;
         document.body.appendChild(placeholderDiv);
     }
