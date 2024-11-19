@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 SECRET_CODE = str(random.randint(1, 1000000))
 print(f'Secret code is {SECRET_CODE}')
-app.config["SECRET_KEY"] = f"secretencryptionkey-"  # Replace with a strong secret key
+app.config["SECRET_KEY"] = f"secretencryptionkey-{SECRET_CODE}"  # Replace with a strong secret key
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # Max file size: 64MB
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -477,7 +477,7 @@ def remove_inactive_rooms():
 def start_room_cleanup_task():
     while True:
         remove_inactive_rooms()
-        socketio.sleep(300)
+        socketio.sleep(60) # make it more often
 
 
 if __name__ == "__main__":
