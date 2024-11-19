@@ -13,10 +13,11 @@ import sys
 import datetime
 import logging
 import shutil
+import configuration as conf
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-SECRET_CODE = str(random.randint(1, 1000000))
+SECRET_CODE = str(random.randint(1, conf.security.secret_code_length))
 print(f'Secret code is {SECRET_CODE}')
 app.config["SECRET_KEY"] = f"secretencryptionkey-{SECRET_CODE}"  # Replace with a strong secret key
 app.config["UPLOAD_FOLDER"] = "uploads"
@@ -29,13 +30,7 @@ socketio = SocketIO(app)
 rooms = {}
 admin_connections = {}
 room_last_activity = {}
-colored_text_codes = {
-    "<1111>": "#4465fc",
-    "<201124>": "rainbow",
-    "<228>": "#de1d1d",
-    "<1231>": "#00ff2e",
-    "<security333>": "#e455e2",
-}
+colored_text_codes = conf.colors.color_codes
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
@@ -107,7 +102,7 @@ def home():
 
         room = code
         if create != False:
-            room = generate_unique_code(6)
+            room = generate_unique_code(conf.rooms.room_code_length)
             rooms[room] = {"members": 0, "names": [], "messages": [], "secrets": {}}
             room_last_activity[room] = time.time()  # Track creation time for activity
         elif code not in rooms and room != 'ADMIN':
@@ -181,7 +176,7 @@ def compress_image(filepath):
     """ Compress image to save space. """
     try:
         img = Image.open(filepath)
-        img.save(filepath, optimize=True, quality=20)  # Compress with quality 10%
+        img.save(filepath, optimize=True, quality=conf.storage.image_compressing_rate)  # Compress with quality 10%
     except Exception as e:
         print(f"Error compressing image: {e}")
 
@@ -191,7 +186,7 @@ def compress_video(filepath):
     try:
         clip = VideoFileClip(filepath)
         compressed_path = filepath.rsplit('.', 1)[0] + "_compressed.mp4"
-        clip.write_videofile(compressed_path, bitrate="20k")  # Reduce video bitrate
+        clip.write_videofile(compressed_path, bitrate=f"{conf.storage.video_compressing_rate}k")  # Reduce video bitrate
         os.replace(compressed_path, filepath)  # Replace original with compressed version
     except Exception as e:
         print(f"Error compressing video: {e}")
@@ -292,6 +287,18 @@ def message(data):
 
     color, username = get_username_color(name)
     msg = data.get("message", "")
+
+    if conf.messages.max_symbols != 0 and len(msg) > conf.messages.max_symbols:
+        content["message"] = f"{name} tried to send message that is bigger than {conf.messages.max_symbols} symbols!"
+        content["name"] = "Security"
+        content['color'] = '#e455e2'
+
+    elif conf.messages.message_delay != 0 and (time.time() - room_last_activity[room]) > conf.messages.message_delay:
+        content["message"] = f"Wait... Cooldown is here! Wait a few seconds and try to send message again!"
+        content["name"] = "Security"
+        content['color'] = '#e455e2'
+        usertgmsg = username
+        direct = True
 
     safe = msg.startswith('/ds ')
     msg = 'Sent secretly: ' + msg[4:] if safe else msg
@@ -462,7 +469,7 @@ def disconnect():
 def remove_inactive_rooms():
     current_time = time.time()
     for room, last_activity in list(room_last_activity.items()):
-        if room != 'MAIN' and rooms[room]["members"] == 0 and (current_time - last_activity) > 3600:
+        if room != 'MAIN' and rooms[room]["members"] == 0 and (current_time - last_activity) > conf.rooms.auto_deleting_rate:
             # Delete all media files in the room's upload folder
             room_folder = os.path.join(app.config["UPLOAD_FOLDER"], room)
             if os.path.exists(room_folder):
@@ -477,7 +484,7 @@ def remove_inactive_rooms():
 def start_room_cleanup_task():
     while True:
         remove_inactive_rooms()
-        socketio.sleep(60) # make it more often
+        socketio.sleep(conf.rooms.auto_deleting_checking_rate) # make it more often
 
 
 if __name__ == "__main__":
