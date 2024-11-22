@@ -24,8 +24,8 @@ rooms.auto_deleting_rate = 3600 # 3600 means 3600 seconds means 1 hour of unacti
 rooms.auto_deleting_checking_rate = 60 # 60 means 60 seconds means 1 minute (rooms would be checked for unactivity every 1 minute)
 
 # CONFIGURATION - MESSAGES
-messages.max_symbols = 0 # set 0 to make it infinite
-messages.message_delay = 0 # set 0 to remove delay
+messages.max_symbols = 120 # set 0 to make it infinite
+messages.message_delay = 0.5 # set 0 to remove delay
 
 # CONFIGURATION - SECURITY
 security.secret_code_length = 12 # sets length of the secret code used to login into ADMIN room or encrypt connections
