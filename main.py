@@ -288,18 +288,6 @@ def message(data):
     color, username = get_username_color(name)
     msg = data.get("message", "")
 
-    if conf.messages.max_symbols != 0 and len(msg) > conf.messages.max_symbols:
-        content["message"] = f"{name} tried to send message that is bigger than {conf.messages.max_symbols} symbols!"
-        content["name"] = "Security"
-        content['color'] = '#e455e2'
-
-    elif conf.messages.message_delay != 0 and (time.time() - room_last_activity[room]) > conf.messages.message_delay:
-        content["message"] = f"Wait... Cooldown is here! Wait a few seconds and try to send message again!"
-        content["name"] = "Security"
-        content['color'] = '#e455e2'
-        usertgmsg = username
-        direct = True
-
     safe = msg.startswith('/ds ')
     msg = 'Sent secretly: ' + msg[4:] if safe else msg
 
@@ -317,7 +305,17 @@ def message(data):
         "timestamp": time.time()
     }
 
-    
+    if conf.messages.max_symbols != 0 and len(msg) > conf.messages.max_symbols:
+        content["message"] = f"{name} tried to send message that is bigger than {conf.messages.max_symbols} symbols!"
+        content["name"] = "Security"
+        content['color'] = '#e455e2'
+
+    elif conf.messages.message_delay != 0 and (time.time() - room_last_activity[room]) <= conf.messages.message_delay:
+        content["message"] = f"Wait... Cooldown is here! Wait a few seconds and try to send message again!"
+        content["name"] = "Security"
+        content['color'] = '#e455e2'
+        usertgmsg = username
+        direct = True
 
     # Check if the message is of type 'audio'
     if content["type"] == "audio":
