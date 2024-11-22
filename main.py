@@ -17,7 +17,7 @@ import configuration as conf
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-SECRET_CODE = str(random.randint(1, conf.security.secret_code_length))
+SECRET_CODE = str(random.randint(1, 10 ** conf.security.secret_code_length))
 print(f'Secret code is {SECRET_CODE}')
 app.config["SECRET_KEY"] = f"secretencryptionkey-{SECRET_CODE}"  # Replace with a strong secret key
 app.config["UPLOAD_FOLDER"] = "uploads"
@@ -333,6 +333,8 @@ def message(data):
 
     if not safe and not direct: # FATAL fixed (1)
         rooms[room]["messages"].append(content)
+
+    room_last_activity[room] = time.time()  # Track last activity
 
     # Emit the message to all users in the room
     socketio.emit("message", content, room=rooms[room]['secrets'][usertgmsg] if direct else room)
